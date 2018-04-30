@@ -52,80 +52,81 @@ class CacheMemory : public SimObject
   public:
     typedef RubyCacheParams Params;
     CacheMemory(const Params *p);
-    ~CacheMemory();
+    virtual ~CacheMemory();
 
-    void init();
+    virtual void init();
 
     // Public Methods
     // perform a cache access and see if we hit or not.  Return true on a hit.
-    bool tryCacheAccess(Addr address, RubyRequestType type,
+    virtual bool tryCacheAccess(Addr address, RubyRequestType type,
                         DataBlock*& data_ptr);
 
     // similar to above, but doesn't require full access check
-    bool testCacheAccess(Addr address, RubyRequestType type,
+    virtual bool testCacheAccess(Addr address, RubyRequestType type,
                          DataBlock*& data_ptr);
 
     // tests to see if an address is present in the cache
-    bool isTagPresent(Addr address) const;
+    virtual bool isTagPresent(Addr address) const;
 
     // Returns true if there is:
     //   a) a tag match on this address or there is
     //   b) an unused line in the same cache "way"
-    bool cacheAvail(Addr address) const;
+    virtual bool cacheAvail(Addr address) const;
 
     // find an unused entry and sets the tag appropriate for the address
-    AbstractCacheEntry* allocate(Addr address,
+    virtual AbstractCacheEntry* allocate(Addr address,
                                  AbstractCacheEntry* new_entry, bool touch);
-    AbstractCacheEntry* allocate(Addr address, AbstractCacheEntry* new_entry)
+    virtual AbstractCacheEntry* allocate(Addr address,
+                                 AbstractCacheEntry* new_entry)
     {
         return allocate(address, new_entry, true);
     }
-    void allocateVoid(Addr address, AbstractCacheEntry* new_entry)
+    virtual void allocateVoid(Addr address, AbstractCacheEntry* new_entry)
     {
         allocate(address, new_entry, true);
     }
 
     // Explicitly free up this address
-    void deallocate(Addr address);
+    virtual void deallocate(Addr address);
 
     // Returns with the physical address of the conflicting cache line
-    Addr cacheProbe(Addr address) const;
+    virtual Addr cacheProbe(Addr address) const;
 
     // looks an address up in the cache
-    AbstractCacheEntry* lookup(Addr address);
-    const AbstractCacheEntry* lookup(Addr address) const;
+    virtual AbstractCacheEntry* lookup(Addr address);
+    virtual const AbstractCacheEntry* lookup(Addr address) const;
 
-    Cycles getTagLatency() const { return tagArray.getLatency(); }
-    Cycles getDataLatency() const { return dataArray.getLatency(); }
+    virtual Cycles getTagLatency() const { return tagArray.getLatency(); }
+    virtual Cycles getDataLatency() const { return dataArray.getLatency(); }
 
-    bool isBlockInvalid(int64_t cache_set, int64_t loc);
-    bool isBlockNotBusy(int64_t cache_set, int64_t loc);
+    virtual bool isBlockInvalid(int64_t cache_set, int64_t loc);
+    virtual bool isBlockNotBusy(int64_t cache_set, int64_t loc);
 
     // Hook for checkpointing the contents of the cache
-    void recordCacheContents(int cntrl, CacheRecorder* tr) const;
+    virtual void recordCacheContents(int cntrl, CacheRecorder* tr) const;
 
     // Set this address to most recently used
-    void setMRU(Addr address);
-    void setMRU(Addr addr, int occupancy);
-    int getReplacementWeight(int64_t set, int64_t loc);
-    void setMRU(const AbstractCacheEntry *e);
+    virtual void setMRU(Addr address);
+    virtual void setMRU(Addr addr, int occupancy);
+    virtual int getReplacementWeight(int64_t set, int64_t loc);
+    virtual void setMRU(const AbstractCacheEntry *e);
 
     // Functions for locking and unlocking cache lines corresponding to the
     // provided address.  These are required for supporting atomic memory
     // accesses.  These are to be used when only the address of the cache entry
     // is available.  In case the entry itself is available. use the functions
     // provided by the AbstractCacheEntry class.
-    void setLocked (Addr addr, int context);
-    void clearLocked (Addr addr);
-    bool isLocked (Addr addr, int context);
+    virtual void setLocked (Addr addr, int context);
+    virtual void clearLocked (Addr addr);
+    virtual bool isLocked (Addr addr, int context);
 
     // Print cache contents
-    void print(std::ostream& out) const;
-    void printData(std::ostream& out) const;
+    virtual void print(std::ostream& out) const;
+    virtual void printData(std::ostream& out) const;
 
-    void regStats();
-    bool checkResourceAvailable(CacheResourceType res, Addr addr);
-    void recordRequestType(CacheRequestType requestType, Addr addr);
+    virtual void regStats();
+    virtual bool checkResourceAvailable(CacheResourceType res, Addr addr);
+    virtual void recordRequestType(CacheRequestType requestType, Addr addr);
 
   public:
     Stats::Scalar m_demand_hits;
@@ -146,10 +147,13 @@ class CacheMemory : public SimObject
     Stats::Scalar numTagArrayStalls;
     Stats::Scalar numDataArrayStalls;
 
-    int getCacheSize() const { return m_cache_size; }
-    int getCacheAssoc() const { return m_cache_assoc; }
-    int getNumBlocks() const { return m_cache_num_sets * m_cache_assoc; }
-    Addr getAddressAtIdx(int idx) const;
+    virtual int getCacheSize() const { return m_cache_size; }
+    virtual int getCacheAssoc() const { return m_cache_assoc; }
+    virtual int getNumBlocks() const
+    {
+        return m_cache_num_sets * m_cache_assoc;
+    }
+    virtual Addr getAddressAtIdx(int idx) const;
 
   private:
     // convert a Address to its location in the cache
