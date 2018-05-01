@@ -37,8 +37,9 @@ from Ruby import send_evicts
 #
 # Declare caches used by the protocol
 #
-class L1Cache(RubyCache): pass
-class L2Cache(RubyCache): pass
+class L1ICache(RubyCache): pass
+class L1DCache(RubyZeroCache): pass
+class L2Cache(RubyZeroCache): pass
 
 def define_options(parser):
     return
@@ -71,11 +72,11 @@ def create_system(options, full_system, system, dma_ports, bootmem,
         #
         # First create the Ruby objects associated with this cpu
         #
-        l1i_cache = L1Cache(size = options.l1i_size,
+        l1i_cache = L1ICache(size = options.l1i_size,
                             assoc = options.l1i_assoc,
                             start_index_bit = block_size_bits,
                             is_icache = True)
-        l1d_cache = L1Cache(size = options.l1d_size,
+        l1d_cache = L1DCache(size = options.l1d_size,
                             assoc = options.l1d_assoc,
                             start_index_bit = block_size_bits,
                             is_icache = False)

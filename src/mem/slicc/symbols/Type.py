@@ -66,7 +66,7 @@ class Type(Symbol):
                 self["message"] = "yes"
 
         # FIXME - all of the following id comparisons are fragile hacks
-        if self.ident in ("CacheMemory"):
+        if self.ident in ("CacheMemory", "ZeroCacheMemory"):
             self["cache"] = "yes"
 
         if self.ident in ("TBETable"):

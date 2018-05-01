@@ -27,7 +27,7 @@
  */
 
 machine(MachineType:L2Cache, "Token protocol")
-: CacheMemory * L2cache;
+: ZeroCacheMemory * L2cache;
   Cycles response_latency := 2;
   Cycles request_latency := 2;
 

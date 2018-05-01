@@ -26,6 +26,7 @@
 #
 # Authors: Steve Reinhardt
 #          Brad Beckmann
+#          Robert Kovacsics
 
 from m5.params import *
 from m5.proxy import *
@@ -50,3 +51,8 @@ class RubyCache(SimObject):
     tagAccessLatency = Param.Cycles(1, "cycles for a tag array access")
     resourceStalls = Param.Bool(False, "stall if there is a resource failure")
     ruby_system = Param.RubySystem(Parent.any, "")
+
+class RubyZeroCache(RubyCache):
+    type = 'RubyZeroCache'
+    cxx_class = 'ZeroCacheMemory'
+    cxx_header = "mem/ruby/structures/ZeroCacheMemory.hh"

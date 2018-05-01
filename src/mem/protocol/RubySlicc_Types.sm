@@ -215,6 +215,31 @@ structure (CacheMemory, external = "yes") {
   Scalar demand_hits;
 }
 
+structure (ZeroCacheMemory, external = "yes") {
+  bool cacheAvail(Addr);
+  Addr cacheProbe(Addr);
+  AbstractCacheEntry allocate(Addr, AbstractCacheEntry);
+  AbstractCacheEntry allocate(Addr, AbstractCacheEntry, bool);
+  void allocateVoid(Addr, AbstractCacheEntry);
+  void deallocate(Addr);
+  AbstractCacheEntry lookup(Addr);
+  bool isTagPresent(Addr);
+  Cycles getTagLatency();
+  Cycles getDataLatency();
+  void setMRU(Addr);
+  void setMRU(Addr, int);
+  void setMRU(AbstractCacheEntry);
+  void recordRequestType(CacheRequestType, Addr);
+  bool checkResourceAvailable(CacheResourceType, Addr);
+
+  int getCacheSize();
+  int getNumBlocks();
+  Addr getAddressAtIdx(int);
+
+  Scalar demand_misses;
+  Scalar demand_hits;
+}
+
 structure (WireBuffer, inport="yes", outport="yes", external = "yes") {
 
 }

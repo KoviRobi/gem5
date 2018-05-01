@@ -29,7 +29,7 @@
 machine(MachineType:L1Cache, "Directory protocol")
  : Sequencer * sequencer;
    CacheMemory * L1Icache;
-   CacheMemory * L1Dcache;
+   ZeroCacheMemory * L1Dcache;
    int l2_select_num_bits;
    Cycles request_latency := 2;
    Cycles use_timeout_latency := 50;
