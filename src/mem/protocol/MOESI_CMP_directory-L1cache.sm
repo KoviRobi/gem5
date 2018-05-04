@@ -70,7 +70,7 @@ machine(MachineType:L1Cache, "Directory protocol")
     // Transient States
     IM, AccessPermission:Busy, "IM", desc="Issued GetX";
     SM, AccessPermission:Read_Only, "SM", desc="Issued GetX, we still have an old copy of the line";
-    OM, AccessPermission:Read_Only, "SM", desc="Issued GetX, received data";
+    OM, AccessPermission:Read_Only, "OM", desc="Issued GetX, received data";
     IS, AccessPermission:Busy, "IS", desc="Issued GetS";
     SI, AccessPermission:Busy, "OI", desc="Issued PutS, waiting for ack";
     OI, AccessPermission:Busy, "OI", desc="Issued PutO, waiting for ack";
