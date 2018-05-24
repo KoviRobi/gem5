@@ -155,7 +155,7 @@ class CacheMemory : public SimObject
     }
     virtual Addr getAddressAtIdx(int idx) const;
 
-  private:
+  protected:
     // convert a Address to its location in the cache
     int64_t addressToCacheSet(Addr address) const;
 
@@ -163,10 +163,6 @@ class CacheMemory : public SimObject
     // returns -1 if the tag is not found.
     int findTagInSet(int64_t line, Addr tag) const;
     int findTagInSetIgnorePermissions(int64_t cacheSet, Addr tag) const;
-
-    // Private copy constructor and assignment operator
-    CacheMemory(const CacheMemory& obj);
-    CacheMemory& operator=(const CacheMemory& obj);
 
   private:
     // Data Members (m_prefix)

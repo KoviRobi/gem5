@@ -43,6 +43,7 @@ Import('*')
 
 DebugFlag('ProtocolTrace')
 DebugFlag('RubyCache')
+DebugFlag('RubyZeroCache')
 DebugFlag('RubyCacheTrace')
 DebugFlag('RubyDma')
 DebugFlag('RubyGenerated')

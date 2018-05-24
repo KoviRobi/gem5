@@ -231,6 +231,8 @@ structure (ZeroCacheMemory, external = "yes") {
   void setMRU(AbstractCacheEntry);
   void recordRequestType(CacheRequestType, Addr);
   bool checkResourceAvailable(CacheResourceType, Addr);
+  void migrateZero(Addr, DataBlock);
+  void verifyZero(Addr, DataBlock);
 
   int getCacheSize();
   int getNumBlocks();

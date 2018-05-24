@@ -663,7 +663,9 @@ machine(MachineType:L1Cache, "Directory protocol")
     assert(is_valid(cache_entry));
     DPRINTF(RubySlicc, "%s\n", cache_entry.DataBlk);
     L1Dcache.setMRU(cache_entry);
+    L1Dcache.verifyZero(address, cache_entry.DataBlk);
     sequencer.writeCallback(address, cache_entry.DataBlk);
+    L1Dcache.migrateZero(address, cache_entry.DataBlk);
     cache_entry.Dirty := true;
   }
 
@@ -672,7 +674,9 @@ machine(MachineType:L1Cache, "Directory protocol")
     DPRINTF(RubySlicc, "%s\n", cache_entry.DataBlk);
     L1Icache.setMRU(address);
     L1Dcache.setMRU(address);
+    L1Dcache.verifyZero(address, cache_entry.DataBlk);
     sequencer.writeCallback(address, cache_entry.DataBlk, true);
+    L1Dcache.migrateZero(address, cache_entry.DataBlk);
     cache_entry.Dirty := true;
   }
 
@@ -850,6 +854,9 @@ machine(MachineType:L1Cache, "Directory protocol")
       assert(is_valid(cache_entry));
       cache_entry.DataBlk := in_msg.DataBlk;
       cache_entry.Dirty := in_msg.Dirty;
+      if (L1Dcache.isTagPresent(address)) {
+        L1Dcache.migrateZero(address, cache_entry.DataBlk);
+      }
 
       if (in_msg.Type == CoherenceResponseType:DATA) {
         //assert(in_msg.Dirty == false);

@@ -30,7 +30,7 @@
 #define __MEM_RUBY_STRUCTURES_ZEROCACHEMEMORY_HH__
 
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "mem/ruby/structures/CacheMemory.hh"
@@ -42,6 +42,27 @@ class ZeroCacheMemory : public CacheMemory
     typedef RubyCacheParams Params;
     ZeroCacheMemory(const Params *p);
     virtual ~ZeroCacheMemory();
+    virtual void verifyZero(Addr address, DataBlock &data);
+    virtual void migrateZero(Addr address, DataBlock &data);
+    virtual AbstractCacheEntry *lookup(Addr address);
+    virtual const AbstractCacheEntry *lookup(Addr address) const;
+    // find an unused entry and sets the tag appropriate for the address
+    virtual AbstractCacheEntry* allocate(Addr address,
+                                 AbstractCacheEntry* new_entry, bool touch);
+    virtual AbstractCacheEntry* allocate(Addr address,
+                                 AbstractCacheEntry* new_entry)
+    {
+        return allocate(address, new_entry, true);
+    }
+    virtual void allocateVoid(Addr address, AbstractCacheEntry* new_entry)
+    {
+        allocate(address, new_entry, true);
+    }
+    // Explicitly free up this address
+    virtual void deallocate(Addr address);
+  protected:
+    DataBlock zeroData;
+    std::set<Addr> zeros;
 };
 
 std::ostream& operator<<(std::ostream& out, const ZeroCacheMemory& obj);
