@@ -875,6 +875,7 @@ machine(MachineType:L1Cache, "Directory protocol")
 
   action(kk_deallocateL1CacheBlock, "\k", desc="Deallocate cache block.  Sets the cache to invalid, allowing a replacement in parallel with a fetch.") {
     if (L1Dcache.isTagPresent(address)) {
+      DPRINTF(RubyZeroCache, " :: data :: False :: %#x\n", address);
       L1Dcache.deallocate(address);
     } else {
       L1Icache.deallocate(address);
@@ -885,6 +886,7 @@ machine(MachineType:L1Cache, "Directory protocol")
   action(ii_allocateL1DCacheBlock, "\i", desc="Set L1 D-cache tag equal to tag of block B.") {
     if ((is_invalid(cache_entry))) {
       set_cache_entry(L1Dcache.allocate(address, new Entry));
+      DPRINTF(RubyZeroCache, " :: data :: True :: %#x\n", address);
     }
   }
 
