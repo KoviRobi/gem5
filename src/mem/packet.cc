@@ -224,9 +224,37 @@ MemCmd::commandInfo[] =
       InvalidCmd, "InvalidateResp" }
 };
 
+const uint8_t*
+Packet::getConstDataPtr() const
+{
+    return getConstPtr<uint8_t>();
+}
+
+void
+Packet::setData(const uint8_t *p)
+{
+    setData(p, getSize(), 0);
+}
+
+void
+Packet::setData(const void *src, const Addr size, const Addr offset)
+{
+    // we should never be copying data onto itself, which means we
+    // must idenfity packets with static data, as they carry the
+    // same pointer from source to destination and back
+    assert(src != getPtr<uint8_t>() || flags.isSet(STATIC_DATA));
+    assert(offset+size <= getSize());
+
+    if (src != getPtr<uint8_t>())
+        // for packet with allocated dynamic data, we copy data from
+        // one to the other, e.g. a forwarded response to a response
+        std::memcpy(getPtr<uint8_t>()+offset, src, size);
+}
+
+
 bool
 Packet::trySatisfyFunctional(Printable *obj, Addr addr, bool is_secure, int size,
-                        uint8_t *_data)
+                             DataContainer *_data)
 {
     const Addr func_start = getAddr();
     const Addr func_end   = getAddr() + getSize() - 1;
@@ -260,9 +288,9 @@ Packet::trySatisfyFunctional(Printable *obj, Addr addr, bool is_secure, int size
         std::max(val_start, func_start);
 
     if (isRead()) {
-        std::memcpy(getPtr<uint8_t>() + func_offset,
-               _data + val_offset,
-               overlap_size);
+        setData(_data->getConstDataPtr() + val_offset,
+                overlap_size,
+                func_offset);
 
         // initialise the tracking of valid bytes if we have not
         // used it already
@@ -288,9 +316,9 @@ Packet::trySatisfyFunctional(Printable *obj, Addr addr, bool is_secure, int size
 
         return all_bytes_valid;
     } else if (isWrite()) {
-        std::memcpy(_data + val_offset,
-               getConstPtr<uint8_t>() + func_offset,
-               overlap_size);
+        _data->setData(getConstPtr<uint8_t>() + func_offset,
+                       overlap_size,
+                       val_offset);
     } else {
         panic("Don't know how to handle command %s\n", cmdString());
     }

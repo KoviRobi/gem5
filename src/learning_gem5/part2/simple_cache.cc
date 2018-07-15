@@ -354,7 +354,7 @@ SimpleCache::accessFunctional(PacketPtr pkt)
     if (it != cacheStore.end()) {
         if (pkt->isWrite()) {
             // Write the data into the block in the cache
-            pkt->writeDataToBlock(it->second, blockSize);
+            pkt->writeData(it->second + pkt->getOffset(blockSize));
         } else if (pkt->isRead()) {
             // Read the data out of the cache block into the packet
             pkt->setDataFromBlock(it->second, blockSize);
@@ -414,7 +414,7 @@ SimpleCache::insert(PacketPtr pkt)
     cacheStore[pkt->getAddr()] = data;
 
     // Write the data into the cache
-    pkt->writeDataToBlock(data, blockSize);
+    pkt->writeData(data + pkt->getOffset(blockSize));
 }
 
 AddrRangeList

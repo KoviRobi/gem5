@@ -57,6 +57,7 @@
 #include "base/printable.hh"
 #include "base/types.hh"
 #include "mem/cache/replacement_policies/base.hh"
+#include "mem/data_container.hh"
 #include "mem/packet.hh"
 #include "mem/request.hh"
 
@@ -82,14 +83,9 @@ enum CacheBlkStatusBits : unsigned {
  * A Basic Cache block.
  * Contains the tag, status, and a pointer to data.
  */
-class CacheBlk : public ReplaceableEntry
+class CacheBlk : public ReplaceableEntry, public DataContainer
 {
-  public:
-    /** Task Id associated with this block */
-    uint32_t task_id;
-
-    /** Data block tag value. */
-    Addr tag;
+  protected:
     /**
      * Contains a copy of the data in this block for easy access. This is used
      * for efficient execution when the data could be actually stored in
@@ -97,7 +93,14 @@ class CacheBlk : public ReplaceableEntry
      * data stored here should be kept consistant with the actual data
      * referenced by this block.
      */
-    uint8_t *data;
+    uint8_t *_data;
+
+  public:
+    /** Task Id associated with this block */
+    uint32_t task_id;
+
+    /** Data block tag value. */
+    Addr tag;
 
     /** block state: OR of CacheBlkStatusBit */
     typedef unsigned State;
@@ -166,7 +169,7 @@ class CacheBlk : public ReplaceableEntry
     std::list<Lock> lockList;
 
   public:
-    CacheBlk() : data(nullptr)
+    CacheBlk() : _data(nullptr)
     {
         invalidate();
     }
@@ -174,6 +177,47 @@ class CacheBlk : public ReplaceableEntry
     CacheBlk(const CacheBlk&) = delete;
     CacheBlk& operator=(const CacheBlk&) = delete;
     virtual ~CacheBlk() {};
+
+    /**
+     * Get this cache block's data pointer
+     * @return The cache block's data pointer
+     */
+    const uint8_t* getConstDataPtr() const override;
+
+    /**
+     * Set this cache block's data pointer, if it has not yet been set.
+     * @param ptr The address at which the data for this cache block starts at.
+     */
+    virtual void setDataPtr(uint8_t *ptr);
+
+    /**
+     * This sets the data from src to this object, first byte written
+     * to offset, and last byte written to offset+size-1 of this
+     * object.
+     * @param src Data source (should contain at least size many
+     * bytes, not checked).
+     * @param size Number of bytes to copy
+     * @param offset Offset to the first byte of this block's data to which
+     *               src will be copied.
+     */
+    void setData(const void *src, const Addr size,
+                 const Addr offset = 0) override;
+
+    /**
+     * Sets the block's data from the packet.
+     * @param pkt The packet containing the data.
+     * @param blk_size The size of this cache-block.
+     */
+    void setDataFromPacket(const Packet *pkt, const unsigned blk_size);
+
+    /**
+     * Executes the atomic operation contained in the packet. An
+     * atomic operation both reads and writes the data in the cache
+     * block, so this is both a getter and a setter.
+     * @param pkt The packet containing the data.
+     * @param blk_size The size of this cache-block.
+     */
+    void executeAtomic(Packet *pkt, unsigned blk_size);
 
     /**
      * Checks the write permissions of this block.
@@ -412,11 +456,17 @@ class TempCacheBlk final : public CacheBlk
      */
     TempCacheBlk(unsigned size) : CacheBlk()
     {
-        data = new uint8_t[size];
+        _data = new uint8_t[size];
     }
     TempCacheBlk(const TempCacheBlk&) = delete;
     TempCacheBlk& operator=(const TempCacheBlk&) = delete;
-    ~TempCacheBlk() { delete [] data; };
+    ~TempCacheBlk() { delete [] _data; };
+
+    void setDataPtr(uint8_t *ptr) override
+    {
+        fatal("TempCacheBlk::setDataPtr should never be called, as it"
+              " has a dynamically allocated _data field");
+    }
 
     /**
      * Invalidate the block and clear all state.

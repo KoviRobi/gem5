@@ -89,7 +89,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             blk = &blks[blkIndex];
 
             // Associate a data chunk to the block
-            blk->data = &dataBlks[blkSize*blkIndex];
+            blk->setDataPtr(&dataBlks[blkSize*blkIndex]);
 
             // Associate a replacement data entry to the block
             blk->replacementData = replacementPolicy->instantiateEntry();

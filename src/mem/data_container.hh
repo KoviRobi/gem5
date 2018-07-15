@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 ARM Limited
+ * Copyright (c) 2018 Robert Kovacsics
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -10,9 +10,6 @@
  * terms below provided that you ensure that this notice is replicated
  * unmodified and in its entirety in all distributions of the software,
  * modified or unmodified, in source code or in binary form.
- *
- * Copyright (c) 2007 The Regents of The University of Michigan
- * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -36,79 +33,38 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors: Robert Kovacsics
  */
 
-#include "mem/cache/blk.hh"
+/**
+ * @file Interface for things containing data (packet, block), to
+ * allow it to be set and get
+ */
 
-#include "base/cprintf.hh"
+#ifndef __MEM_DATA_CONTAINER_HH__
+#define __MEM_DATA_CONTAINER_HH__
 
-const uint8_t*
-CacheBlk::getConstDataPtr() const
+class DataContainer
 {
-    return _data;
-}
+  public:
+    /**
+     * This sets the data from src to this object, first byte written
+     * to offset, and last byte written to offset+size-1 of this
+     * object.
+     * @param src Data source (should contain at least size many
+     * bytes, not checked).
+     * @param size Number of bytes to copy
+     * @param offset First byte of this object's data to copy src into
+     */
+    virtual void setData(const void *src, const Addr size,
+                         const Addr offset = 0) = 0;
 
-void
-CacheBlk::setDataPtr(uint8_t *ptr)
-{
-    assert(_data == nullptr);
-    _data = ptr;
-}
+    /**
+     * This gets the pointer to the object's data.
+     * @return this object's data pointer.
+     */
+    virtual const uint8_t* getConstDataPtr() const = 0;
+};
 
-void
-CacheBlk::setData(const void *src, const Addr size,
-                  const Addr offset)
-{
-    std::memcpy(_data+offset, src, size);
-}
-
-void
-CacheBlk::setDataFromPacket(const Packet *pkt, const unsigned blk_size)
-{
-    assert(pkt->getOffset(blk_size) + pkt->getSize() <= blk_size);
-    setData(pkt->getConstDataPtr(), pkt->getSize(), pkt->getOffset(blk_size));
-}
-
-void
-CacheBlk::executeAtomic(Packet *pkt, unsigned blk_size)
-{
-    (*(pkt->getAtomicOp()))(_data+pkt->getOffset(blk_size));
-}
-
-void
-CacheBlk::insert(const Addr tag, const bool is_secure,
-                 const int src_master_ID, const uint32_t task_ID)
-{
-    // Set block tag
-    this->tag = tag;
-
-    // Set source requestor ID
-    srcMasterId = src_master_ID;
-
-    // Set task ID
-    task_id = task_ID;
-
-    // Set insertion tick as current tick
-    tickInserted = curTick();
-
-    // Insertion counts as a reference to the block
-    refCount = 1;
-
-    // Set secure state
-    if (is_secure) {
-        status = BlkSecure;
-    } else {
-        status = 0;
-    }
-}
-
-void
-CacheBlkPrintWrapper::print(std::ostream &os, int verbosity,
-                            const std::string &prefix) const
-{
-    ccprintf(os, "%sblk %c%c%c%c\n", prefix,
-             blk->isValid()    ? 'V' : '-',
-             blk->isWritable() ? 'E' : '-',
-             blk->isDirty()    ? 'M' : '-',
-             blk->isSecure()   ? 'S' : '-');
-}
+#endif // __MEM_DATA_CONTAINER_HH__

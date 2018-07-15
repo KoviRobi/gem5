@@ -68,6 +68,7 @@
 #include "mem/cache/mshr.hh"
 #include "mem/cache/tags/base.hh"
 #include "mem/cache/write_queue_entry.hh"
+#include "mem/data_container.hh"
 #include "mem/request.hh"
 #include "params/Cache.hh"
 
@@ -1120,13 +1121,14 @@ Cache::handleSnoop(PacketPtr pkt, CacheBlk *blk, bool is_timing,
                  "but keeping the block", name(), pkt->print());
 
         if (is_timing) {
-            doTimingSupplyResponse(pkt, blk->data, is_deferred, pending_inval);
+            doTimingSupplyResponse(pkt, blk->getConstDataPtr(), is_deferred,
+                                   pending_inval);
         } else {
             pkt->makeAtomicResponse();
             // packets such as upgrades do not actually have any data
             // payload
             if (pkt->hasData())
-                pkt->setDataFromBlock(blk->data, blkSize);
+                pkt->setDataFromBlock(blk->getConstDataPtr(), blkSize);
         }
     }
 

@@ -63,6 +63,7 @@
 #include "base/logging.hh"
 #include "base/printable.hh"
 #include "base/types.hh"
+#include "mem/data_container.hh"
 #include "mem/request.hh"
 #include "sim/core.hh"
 
@@ -251,7 +252,7 @@ class MemCmd
  * ultimate destination and back, possibly being conveyed by several
  * different Packets along the way.)
  */
-class Packet : public Printable
+class Packet : public Printable, public DataContainer
 {
   public:
     typedef uint32_t FlagsType;
@@ -1009,6 +1010,9 @@ class Packet : public Printable
         return (const T*)data;
     }
 
+    const uint8_t*getConstDataPtr() const override;
+
+
     /**
      * Get the data in the packet byte swapped from big endian to
      * host endian.
@@ -1073,19 +1077,9 @@ class Packet : public Printable
     /**
      * Copy data into the packet from the provided pointer.
      */
-    void
-    setData(const uint8_t *p)
-    {
-        // we should never be copying data onto itself, which means we
-        // must idenfity packets with static data, as they carry the
-        // same pointer from source to destination and back
-        assert(p != getPtr<uint8_t>() || flags.isSet(STATIC_DATA));
-
-        if (p != getPtr<uint8_t>())
-            // for packet with allocated dynamic data, we copy data from
-            // one to the other, e.g. a forwarded response to a response
-            std::memcpy(getPtr<uint8_t>(), p, getSize());
-    }
+    void setData(const uint8_t *p);
+    void setData(const void *src, const Addr size,
+                 const Addr offset = 0) override;
 
     /**
      * Copy data into the packet from the provided block pointer,
@@ -1094,7 +1088,7 @@ class Packet : public Printable
     void
     setDataFromBlock(const uint8_t *blk_data, int blkSize)
     {
-        setData(blk_data + getOffset(blkSize));
+        setData(blk_data + getOffset(blkSize), getSize());
     }
 
     /**
@@ -1105,18 +1099,6 @@ class Packet : public Printable
     writeData(uint8_t *p) const
     {
         std::memcpy(p, getConstPtr<uint8_t>(), getSize());
-    }
-
-    /**
-     * Copy data from the packet to the provided block pointer, which
-     * is aligned to the given block size.
-     * @param blk_data Pointer to block to which data will be copied.
-     * @param blkSize Block size in bytes.
-     */
-    void
-    writeDataToBlock(uint8_t *blk_data, int blkSize) const
-    {
-        writeData(blk_data + getOffset(blkSize));
     }
 
     /**
@@ -1175,7 +1157,7 @@ class Packet : public Printable
         return trySatisfyFunctional(other, other->getAddr(), other->isSecure(),
                                     other->getSize(),
                                     other->hasData() ?
-                                    other->getPtr<uint8_t>() : NULL);
+                                    other : NULL);
     }
 
     /**
@@ -1207,7 +1189,7 @@ class Packet : public Printable
      */
     bool
     trySatisfyFunctional(Printable *obj, Addr base, bool is_secure, int size,
-                         uint8_t *_data);
+                         DataContainer *_data);
 
     /**
      * Push label for PrintReq (safe to call unconditionally).

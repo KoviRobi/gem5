@@ -663,7 +663,7 @@ BaseCache::functionalAccess(PacketPtr pkt, bool from_cpu_side)
     // see if we have data at all (owned or otherwise)
     bool have_data = blk && blk->isValid()
         && pkt->trySatisfyFunctional(&cbpw, blk_addr, is_secure, blkSize,
-                                     blk->data);
+                                     blk);
 
     // data we have is dirty if marked as such or if we have an
     // in-service MSHR that is pending a modified line
@@ -711,7 +711,7 @@ BaseCache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     uint32_t condition_val32;
 
     int offset = pkt->getOffset(blkSize);
-    uint8_t *blk_data = blk->data + offset;
+    const uint8_t *blk_data = blk->getConstDataPtr() + offset;
 
     assert(sizeof(uint64_t) >= pkt->getSize());
 
@@ -735,7 +735,7 @@ BaseCache::cmpAndSwap(CacheBlk *blk, PacketPtr pkt)
     }
 
     if (overwrite_mem) {
-        std::memcpy(blk_data, &overwrite_val, pkt->getSize());
+        blk->setData(&overwrite_val, pkt->getSize(), offset);
         blk->status |= BlkDirty;
     }
 }
@@ -843,14 +843,9 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
         if (pkt->isAtomicOp()) {
             // extract data from cache and save it into the data field in
             // the packet as a return value from this atomic op
-
-            int offset = tags->extractBlkOffset(pkt->getAddr());
-            uint8_t *blk_data = blk->data + offset;
-            std::memcpy(pkt->getPtr<uint8_t>(), blk_data, pkt->getSize());
-
+            pkt->setDataFromBlock(blk->getConstDataPtr(), blkSize);
             // execute AMO operation
-            (*(pkt->getAtomicOp()))(blk_data);
-
+            blk->executeAtomic(pkt, blkSize);
             // set block status to dirty
             blk->status |= BlkDirty;
         } else {
@@ -864,7 +859,7 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
         assert(blk->isWritable());
         // Write or WriteLine at the first cache with block in writable state
         if (blk->checkWrite(pkt)) {
-            pkt->writeDataToBlock(blk->data, blkSize);
+            blk->setDataFromPacket(pkt, blkSize);
         }
         // Always mark the line as dirty (and thus transition to the
         // Modified state) even if we are a failed StoreCond so we
@@ -879,7 +874,7 @@ BaseCache::satisfyRequest(PacketPtr pkt, CacheBlk *blk, bool, bool)
 
         // all read responses have a data payload
         assert(pkt->hasRespData());
-        pkt->setDataFromBlock(blk->data, blkSize);
+        pkt->setDataFromBlock(blk->getConstDataPtr(), blkSize);
     } else if (pkt->isUpgrade()) {
         // sanity check
         assert(!pkt->hasSharers());
@@ -1014,7 +1009,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         }
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
-        pkt->writeDataToBlock(blk->data, blkSize);
+        blk->setDataFromPacket(pkt, blkSize);
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
         incHitCount(pkt);
         // populate the time when the block will be ready to access.
@@ -1070,7 +1065,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         }
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
-        pkt->writeDataToBlock(blk->data, blkSize);
+        blk->setDataFromPacket(pkt, blkSize);
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
 
         incHitCount(pkt);
@@ -1211,7 +1206,7 @@ BaseCache::handleFill(PacketPtr pkt, CacheBlk *blk, PacketList &writebacks,
         assert(pkt->hasData());
         assert(pkt->getSize() == blkSize);
 
-        pkt->writeDataToBlock(blk->data, blkSize);
+        blk->setDataFromPacket(pkt, blkSize);
     }
     // We pay for fillLatency here.
     blk->whenReady = clockEdge() + fillLatency * clockPeriod() +
@@ -1330,7 +1325,7 @@ BaseCache::writebackBlk(CacheBlk *blk)
     blk->status &= ~BlkDirty;
 
     pkt->allocate();
-    pkt->setDataFromBlock(blk->data, blkSize);
+    pkt->setDataFromBlock(blk->getConstDataPtr(), blkSize);
 
     return pkt;
 }
@@ -1369,7 +1364,7 @@ BaseCache::writecleanBlk(CacheBlk *blk, Request::Flags dest, PacketId id)
     blk->status &= ~BlkDirty;
 
     pkt->allocate();
-    pkt->setDataFromBlock(blk->data, blkSize);
+    pkt->setDataFromBlock(blk->getConstDataPtr(), blkSize);
 
     return pkt;
 }
@@ -1408,7 +1403,9 @@ BaseCache::writebackVisitor(CacheBlk &blk)
         }
 
         Packet packet(request, MemCmd::WriteReq);
-        packet.dataStatic(blk.data);
+        // Note, the const-ness is cast away, but this is a write
+        // packet, so it won't have the data changed
+        packet.dataStaticConst(blk.getConstDataPtr());
 
         memSidePort.sendFunctional(&packet);
 
