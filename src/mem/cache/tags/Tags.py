@@ -96,3 +96,12 @@ class FALRU(BaseTags):
 
     min_tracked_cache_size = Param.MemorySize("128kB", "Minimum cache size for"
                                               " which we track statistics")
+
+class ZeroTags(BaseTags):
+    type = 'ZeroTags'
+    cxx_class = 'ZeroTags'
+    cxx_header = "mem/cache/tags/zero_tags.hh"
+
+    # Get the block size from the parent (system)
+    zero_block_size = Param.Int(Parent.cache_line_size,
+                                "zero-cache block size in bytes")
