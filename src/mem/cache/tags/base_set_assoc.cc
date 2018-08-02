@@ -140,3 +140,137 @@ BaseSetAssocParams::create()
 {
     return new BaseSetAssoc(this);
 }
+
+
+CacheBlk*
+BaseSetAssoc::accessBlock(Addr addr, bool is_secure, Cycles &lat)
+{
+    BlkType *blk = findBlock(addr, is_secure);
+
+    // Access all tags in parallel, hence one in each way.  The data side
+    // either accesses all blocks in parallel, or one block sequentially on
+    // a hit.  Sequential access with a miss doesn't access data.
+    tagAccesses += allocAssoc;
+    if (sequentialAccess) {
+        if (blk != nullptr) {
+            dataAccesses += 1;
+        }
+    } else {
+        dataAccesses += allocAssoc;
+    }
+
+    if (blk != nullptr) {
+        // If a cache hit
+        lat = accessLatency;
+        // Check if the block to be accessed is available. If not,
+        // apply the accessLatency on top of block->whenReady.
+        if (blk->whenReady > curTick() &&
+            cache->ticksToCycles(blk->whenReady - curTick()) >
+            accessLatency) {
+            lat = cache->ticksToCycles(blk->whenReady - curTick()) +
+                accessLatency;
+        }
+
+        // Update number of references to accessed block
+        blk->refCount++;
+
+        // Update replacement data of accessed block
+        replacementPolicy->touch(blk->replacementData);
+    } else {
+        // If a cache miss
+        lat = lookupLatency;
+    }
+
+    return blk;
+}
+
+CacheBlk*
+BaseSetAssoc::findVictim(Addr addr, const bool is_secure,
+                         std::vector<CacheBlk*>& evict_blks) const
+{
+    // Get possible locations for the victim block
+    std::vector<CacheBlk*> locations = getPossibleLocations(addr);
+
+    // Choose replacement victim from replacement candidates
+    CacheBlk* victim = static_cast<CacheBlk*>(
+        replacementPolicy->getVictim(
+            std::vector<ReplaceableEntry*>(
+                locations.begin(), locations.end())));
+
+    // There is only one eviction for this replacement
+    evict_blks.push_back(victim);
+
+    DPRINTF(CacheRepl, "set %x, way %x: selecting blk for replacement\n",
+            victim->set, victim->way);
+
+    return victim;
+}
+
+const std::vector<CacheBlk*>
+BaseSetAssoc::getPossibleLocations(Addr addr) const
+{
+    return sets[extractSet(addr)].blks;
+}
+
+void
+BaseSetAssoc::insertBlock(const PacketPtr pkt, CacheBlk *blk)
+{
+    // Insert block
+    BaseTags::insertBlock(pkt, blk);
+
+    // Increment tag counter
+    tagsInUse++;
+
+    // Update replacement policy
+    replacementPolicy->reset(blk->replacementData);
+}
+
+void
+BaseSetAssoc::setWayAllocationMax(int ways)
+{
+    fatal_if(ways < 1, "Allocation limit must be greater than zero");
+    allocAssoc = ways;
+}
+
+int
+BaseSetAssoc::getWayAllocationMax() const
+{
+    return allocAssoc;
+}
+
+Addr
+BaseSetAssoc::extractTag(Addr addr) const
+{
+    return (addr >> tagShift);
+}
+
+Addr
+BaseSetAssoc::regenerateBlkAddr(const CacheBlk* blk) const
+{
+    return ((blk->tag << tagShift) | ((Addr)blk->set << setShift));
+}
+
+void
+BaseSetAssoc::forEachBlk(std::function<void(CacheBlk &)> visitor)
+{
+    for (CacheBlk& blk : blks) {
+        visitor(blk);
+    }
+}
+
+bool
+BaseSetAssoc::anyBlk(std::function<bool(CacheBlk &)> visitor)
+{
+    for (CacheBlk& blk : blks) {
+        if (visitor(blk)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int
+BaseSetAssoc::extractSet(Addr addr) const
+{
+    return ((addr >> setShift) & setMask);
+}

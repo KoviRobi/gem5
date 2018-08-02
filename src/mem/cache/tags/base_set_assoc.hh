@@ -139,46 +139,7 @@ class BaseSetAssoc : public BaseTags
      * @param lat The access latency.
      * @return Pointer to the cache block if found.
      */
-    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override
-    {
-        BlkType *blk = findBlock(addr, is_secure);
-
-        // Access all tags in parallel, hence one in each way.  The data side
-        // either accesses all blocks in parallel, or one block sequentially on
-        // a hit.  Sequential access with a miss doesn't access data.
-        tagAccesses += allocAssoc;
-        if (sequentialAccess) {
-            if (blk != nullptr) {
-                dataAccesses += 1;
-            }
-        } else {
-            dataAccesses += allocAssoc;
-        }
-
-        if (blk != nullptr) {
-            // If a cache hit
-            lat = accessLatency;
-            // Check if the block to be accessed is available. If not,
-            // apply the accessLatency on top of block->whenReady.
-            if (blk->whenReady > curTick() &&
-                cache->ticksToCycles(blk->whenReady - curTick()) >
-                accessLatency) {
-                lat = cache->ticksToCycles(blk->whenReady - curTick()) +
-                accessLatency;
-            }
-
-            // Update number of references to accessed block
-            blk->refCount++;
-
-            // Update replacement data of accessed block
-            replacementPolicy->touch(blk->replacementData);
-        } else {
-            // If a cache miss
-            lat = lookupLatency;
-        }
-
-        return blk;
-    }
+    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override;
 
     /**
      * Finds the given address in the cache, do not update replacement data.
@@ -209,24 +170,7 @@ class BaseSetAssoc : public BaseTags
      * @return Cache block to be replaced.
      */
     CacheBlk* findVictim(Addr addr, const bool is_secure,
-                         std::vector<CacheBlk*>& evict_blks) const override
-    {
-        // Get possible locations for the victim block
-        std::vector<CacheBlk*> locations = getPossibleLocations(addr);
-
-        // Choose replacement victim from replacement candidates
-        CacheBlk* victim = static_cast<CacheBlk*>(replacementPolicy->getVictim(
-                               std::vector<ReplaceableEntry*>(
-                                   locations.begin(), locations.end())));
-
-        // There is only one eviction for this replacement
-        evict_blks.push_back(victim);
-
-        DPRINTF(CacheRepl, "set %x, way %x: selecting blk for replacement\n",
-            victim->set, victim->way);
-
-        return victim;
-    }
+                         std::vector<CacheBlk*>& evict_blks) const override;
 
     /**
      * Find all possible block locations for insertion and replacement of
@@ -237,10 +181,7 @@ class BaseSetAssoc : public BaseTags
      * @param addr The addr to a find possible locations for.
      * @return The possible locations.
      */
-    const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const
-    {
-        return sets[extractSet(addr)].blks;
-    }
+    const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const;
 
     /**
      * Insert the new block into the cache and update replacement data.
@@ -248,46 +189,27 @@ class BaseSetAssoc : public BaseTags
      * @param pkt Packet holding the address to update
      * @param blk The block to update.
      */
-    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override
-    {
-        // Insert block
-        BaseTags::insertBlock(pkt, blk);
-
-        // Increment tag counter
-        tagsInUse++;
-
-        // Update replacement policy
-        replacementPolicy->reset(blk->replacementData);
-    }
+    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override;
 
     /**
      * Limit the allocation for the cache ways.
      * @param ways The maximum number of ways available for replacement.
      */
-    virtual void setWayAllocationMax(int ways) override
-    {
-        fatal_if(ways < 1, "Allocation limit must be greater than zero");
-        allocAssoc = ways;
-    }
+    virtual void setWayAllocationMax(int ways) override;
 
     /**
      * Get the way allocation mask limit.
      * @return The maximum number of ways available for replacement.
      */
-    virtual int getWayAllocationMax() const override
-    {
-        return allocAssoc;
-    }
+    virtual int getWayAllocationMax() const override;
 
     /**
      * Generate the tag from the given address.
      * @param addr The address to get the tag from.
      * @return The tag of the address.
      */
-    Addr extractTag(Addr addr) const override
-    {
-        return (addr >> tagShift);
-    }
+    Addr extractTag(Addr addr) const override;
+
 
     /**
      * Regenerate the block address from the tag and set.
@@ -295,25 +217,11 @@ class BaseSetAssoc : public BaseTags
      * @param block The block.
      * @return the block address.
      */
-    Addr regenerateBlkAddr(const CacheBlk* blk) const override
-    {
-        return ((blk->tag << tagShift) | ((Addr)blk->set << setShift));
-    }
+    Addr regenerateBlkAddr(const CacheBlk* blk) const override;
 
-    void forEachBlk(std::function<void(CacheBlk &)> visitor) override {
-        for (CacheBlk& blk : blks) {
-            visitor(blk);
-        }
-    }
+    void forEachBlk(std::function<void(CacheBlk &)> visitor) override;
 
-    bool anyBlk(std::function<bool(CacheBlk &)> visitor) override {
-        for (CacheBlk& blk : blks) {
-            if (visitor(blk)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    bool anyBlk(std::function<bool(CacheBlk &)> visitor) override;
 
   private:
     /**
@@ -322,10 +230,7 @@ class BaseSetAssoc : public BaseTags
      * @param addr The address to get the set from.
      * @return The set index of the address.
      */
-    int extractSet(Addr addr) const
-    {
-        return ((addr >> setShift) & setMask);
-    }
+    int extractSet(Addr addr) const;
 };
 
 #endif //__MEM_CACHE_TAGS_BASE_SET_ASSOC_HH__
