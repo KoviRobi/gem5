@@ -168,7 +168,7 @@ class BaseTags : public ClockedObject
      * Set the parent cache back pointer.
      * @param _cache Pointer to parent cache.
      */
-    void setCache(BaseCache *_cache);
+    virtual void setCache(BaseCache *_cache);
 
     /**
      * Register local statistics.

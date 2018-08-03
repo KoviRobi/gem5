@@ -102,6 +102,7 @@ class ZeroTags(BaseTags):
     cxx_class = 'ZeroTags'
     cxx_header = "mem/cache/tags/zero_tags.hh"
 
+    normal_data_tags = Param.BaseTags(BaseSetAssoc(), "Tag store")
     # Get the block size from the parent (system)
     zero_block_size = Param.Int(Parent.cache_line_size,
                                 "zero-cache block size in bytes")

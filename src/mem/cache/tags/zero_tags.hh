@@ -47,11 +47,13 @@
 class ZeroTags : public BaseTags
 {
   protected:
+    BaseTags *normalDataTags;
     const unsigned zeroBlkSize;
     const unsigned zeroBlkMask;
 
   public:
     ZeroTags(const ZeroTagsParams *p);
+    void setCache(BaseCache *_cache) override;
     CacheBlk *findBlock(Addr addr, bool is_secure) const;
     ReplaceableEntry* findBlockBySetAndWay(int set, int way) const;
     void invalidate(CacheBlk *blk);
