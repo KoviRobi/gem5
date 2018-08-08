@@ -270,3 +270,41 @@ BaseTags::regStats()
     registerDumpCallback(new BaseTagsDumpCallback(this));
     registerExitCallback(new BaseTagsCallback(this));
 }
+
+Addr
+BaseTags::blkAlign(Addr addr) const
+{
+    return addr & ~blkMask;
+}
+
+int
+BaseTags::extractBlkOffset(Addr addr) const
+{
+    return (addr & blkMask);
+}
+
+void
+BaseTags::setWayAllocationMax(int ways)
+{
+    panic("This tag class does not implement way allocation limit!\n");
+}
+
+int
+BaseTags::getWayAllocationMax() const
+{
+    panic("This tag class does not implement way allocation limit!\n");
+    return -1;
+}
+
+void
+BaseTags::invalidate(CacheBlk *blk)
+{
+    assert(blk);
+    assert(blk->isValid());
+
+    occupancies[blk->srcMasterId]--;
+    totalRefs += blk->refCount;
+    sampledRefs++;
+
+    blk->invalidate();
+}

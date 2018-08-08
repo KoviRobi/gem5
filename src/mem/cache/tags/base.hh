@@ -210,56 +210,33 @@ class BaseTags : public ClockedObject
      * @param addr the address to align.
      * @return The block address.
      */
-    Addr blkAlign(Addr addr) const
-    {
-        return addr & ~blkMask;
-    }
+    Addr blkAlign(Addr addr) const;
 
     /**
      * Calculate the block offset of an address.
      * @param addr the address to get the offset of.
      * @return the block offset.
      */
-    int extractBlkOffset(Addr addr) const
-    {
-        return (addr & blkMask);
-    }
+    int extractBlkOffset(Addr addr) const;
 
     /**
      * Limit the allocation for the cache ways.
      * @param ways The maximum number of ways available for replacement.
      */
-    virtual void setWayAllocationMax(int ways)
-    {
-        panic("This tag class does not implement way allocation limit!\n");
-    }
+    virtual void setWayAllocationMax(int ways);
 
     /**
      * Get the way allocation mask limit.
      * @return The maximum number of ways available for replacement.
      */
-    virtual int getWayAllocationMax() const
-    {
-        panic("This tag class does not implement way allocation limit!\n");
-        return -1;
-    }
+    virtual int getWayAllocationMax() const;
 
     /**
      * This function updates the tags when a block is invalidated
      *
      * @param blk A valid block to invalidate.
      */
-    virtual void invalidate(CacheBlk *blk)
-    {
-        assert(blk);
-        assert(blk->isValid());
-
-        occupancies[blk->srcMasterId]--;
-        totalRefs += blk->refCount;
-        sampledRefs++;
-
-        blk->invalidate();
-    }
+    virtual void invalidate(CacheBlk *blk);
 
     /**
      * Find replacement victim based on address. If the address requires
