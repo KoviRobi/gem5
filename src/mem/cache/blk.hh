@@ -169,14 +169,11 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
     std::list<Lock> lockList;
 
   public:
-    CacheBlk() : _data(nullptr)
-    {
-        invalidate();
-    }
+    CacheBlk();
 
     CacheBlk(const CacheBlk&) = delete;
     CacheBlk& operator=(const CacheBlk&) = delete;
-    virtual ~CacheBlk() {};
+    virtual ~CacheBlk();
 
     /**
      * Get this cache block's data pointer
@@ -223,11 +220,7 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      * Checks the write permissions of this block.
      * @return True if the block is writable.
      */
-    bool isWritable() const
-    {
-        const State needed_bits = BlkWritable | BlkValid;
-        return (status & needed_bits) == needed_bits;
-    }
+    bool isWritable() const;
 
     /**
      * Checks the read permissions of this block.  Note that a block
@@ -235,63 +228,37 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      * upgrade miss.
      * @return True if the block is readable.
      */
-    bool isReadable() const
-    {
-        const State needed_bits = BlkReadable | BlkValid;
-        return (status & needed_bits) == needed_bits;
-    }
+    bool isReadable() const;
 
     /**
      * Checks that a block is valid.
      * @return True if the block is valid.
      */
-    bool isValid() const
-    {
-        return (status & BlkValid) != 0;
-    }
+    bool isValid() const;
 
     /**
      * Invalidate the block and clear all state.
      */
-    virtual void invalidate()
-    {
-        tag = MaxAddr;
-        task_id = ContextSwitchTaskId::Unknown;
-        status = 0;
-        whenReady = MaxTick;
-        refCount = 0;
-        srcMasterId = Request::invldMasterId;
-        tickInserted = MaxTick;
-        lockList.clear();
-    }
+    virtual void invalidate();
 
     /**
      * Check to see if a block has been written.
      * @return True if the block is dirty.
      */
-    bool isDirty() const
-    {
-        return (status & BlkDirty) != 0;
-    }
+    bool isDirty() const;
 
     /**
      * Check if this block was the result of a hardware prefetch, yet to
      * be touched.
      * @return True if the block was a hardware prefetch, unaccesed.
      */
-    bool wasPrefetched() const
-    {
-        return (status & BlkHWPrefetched) != 0;
-    }
+    bool wasPrefetched() const;
 
     /**
      * Check if this block holds data from the secure memory space.
      * @return True if the block holds data from the secure memory space.
      */
-    bool isSecure() const
-    {
-        return (status & BlkSecure) != 0;
-    }
+    bool isSecure() const;
 
     /**
      * Set member variables when a block insertion occurs. Resets reference
@@ -311,35 +278,13 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      * Track the fact that a local locked was issued to the
      * block. Invalidate any previous LL to the same address.
      */
-    void trackLoadLocked(PacketPtr pkt)
-    {
-        assert(pkt->isLLSC());
-        auto l = lockList.begin();
-        while (l != lockList.end()) {
-            if (l->intersects(pkt->req))
-                l = lockList.erase(l);
-            else
-                ++l;
-        }
-
-        lockList.emplace_front(pkt->req);
-    }
+    void trackLoadLocked(PacketPtr pkt);
 
     /**
      * Clear the any load lock that intersect the request, and is from
      * a different context.
      */
-    void clearLoadLocks(const RequestPtr &req)
-    {
-        auto l = lockList.begin();
-        while (l != lockList.end()) {
-            if (l->intersects(req) && l->contextId != req->contextId()) {
-                l = lockList.erase(l);
-            } else {
-                ++l;
-            }
-        }
-    }
+    void clearLoadLocks(const RequestPtr &req);
 
     /**
      * Pretty-print a tag, and interpret state bits to readable form
@@ -347,93 +292,14 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      *
      * @return string with basic state information
      */
-    std::string print() const
-    {
-        /**
-         *  state       M   O   E   S   I
-         *  writable    1   0   1   0   0
-         *  dirty       1   1   0   0   0
-         *  valid       1   1   1   1   0
-         *
-         *  state   writable    dirty   valid
-         *  M       1           1       1
-         *  O       0           1       1
-         *  E       1           0       1
-         *  S       0           0       1
-         *  I       0           0       0
-         *
-         * Note that only one cache ever has a block in Modified or
-         * Owned state, i.e., only one cache owns the block, or
-         * equivalently has the BlkDirty bit set. However, multiple
-         * caches on the same path to memory can have a block in the
-         * Exclusive state (despite the name). Exclusive means this
-         * cache has the only copy at this level of the hierarchy,
-         * i.e., there may be copies in caches above this cache (in
-         * various states), but there are no peers that have copies on
-         * this branch of the hierarchy, and no caches at or above
-         * this level on any other branch have copies either.
-         **/
-        unsigned state = isWritable() << 2 | isDirty() << 1 | isValid();
-        char s = '?';
-        switch (state) {
-          case 0b111: s = 'M'; break;
-          case 0b011: s = 'O'; break;
-          case 0b101: s = 'E'; break;
-          case 0b001: s = 'S'; break;
-          case 0b000: s = 'I'; break;
-          default:    s = 'T'; break; // @TODO add other types
-        }
-        return csprintf("state: %x (%c) valid: %d writable: %d readable: %d "
-                        "dirty: %d tag: %x", status, s, isValid(),
-                        isWritable(), isReadable(), isDirty(), tag);
-    }
+    std::string print() const;
 
     /**
      * Handle interaction of load-locked operations and stores.
      * @return True if write should proceed, false otherwise.  Returns
      * false only in the case of a failed store conditional.
      */
-    bool checkWrite(PacketPtr pkt)
-    {
-        assert(pkt->isWrite());
-
-        // common case
-        if (!pkt->isLLSC() && lockList.empty())
-            return true;
-
-        const RequestPtr &req = pkt->req;
-
-        if (pkt->isLLSC()) {
-            // it's a store conditional... have to check for matching
-            // load locked.
-            bool success = false;
-
-            auto l = lockList.begin();
-            while (!success && l != lockList.end()) {
-                if (l->matches(pkt->req)) {
-                    // it's a store conditional, and as far as the
-                    // memory system can tell, the requesting
-                    // context's lock is still valid.
-                    success = true;
-                    lockList.erase(l);
-                } else {
-                    ++l;
-                }
-            }
-
-            req->setExtraData(success ? 1 : 0);
-            // clear any intersected locks from other contexts (our LL
-            // should already have cleared them)
-            clearLoadLocks(req);
-            return success;
-        } else {
-            // a normal write, if there is any lock not from this
-            // context we clear the list, thus for a private cache we
-            // never clear locks on normal writes
-            clearLoadLocks(req);
-            return true;
-        }
-    }
+    bool checkWrite(PacketPtr pkt);
 };
 
 /**
@@ -454,52 +320,27 @@ class TempCacheBlk final : public CacheBlk
      * Creates a temporary cache block, with its own storage.
      * @param size The size (in bytes) of this cache block.
      */
-    TempCacheBlk(unsigned size) : CacheBlk()
-    {
-        _data = new uint8_t[size];
-    }
+    TempCacheBlk(unsigned size);
     TempCacheBlk(const TempCacheBlk&) = delete;
     TempCacheBlk& operator=(const TempCacheBlk&) = delete;
-    ~TempCacheBlk() { delete [] _data; };
+    ~TempCacheBlk();
 
-    void setDataPtr(uint8_t *ptr) override
-    {
-        fatal("TempCacheBlk::setDataPtr should never be called, as it"
-              " has a dynamically allocated _data field");
-    }
+    void setDataPtr(uint8_t *ptr) override;
 
     /**
      * Invalidate the block and clear all state.
      */
-    void invalidate() override {
-        CacheBlk::invalidate();
-
-        _addr = MaxAddr;
-    }
+    void invalidate();
 
     void insert(const Addr addr, const bool is_secure,
-                const int src_master_ID=0, const uint32_t task_ID=0) override
-    {
-        // Set block address
-        _addr = addr;
-
-        // Set secure state
-        if (is_secure) {
-            status = BlkSecure;
-        } else {
-            status = 0;
-        }
-    }
+                const int src_master_ID=0, const uint32_t task_ID=0) override;
 
     /**
      * Get block's address.
      *
      * @return addr Address value.
      */
-    Addr getAddr() const
-    {
-        return _addr;
-    }
+    Addr getAddr() const;
 };
 
 /**
@@ -512,8 +353,8 @@ class CacheBlkPrintWrapper : public Printable
 {
     CacheBlk *blk;
   public:
-    CacheBlkPrintWrapper(CacheBlk *_blk) : blk(_blk) {}
-    virtual ~CacheBlkPrintWrapper() {}
+    CacheBlkPrintWrapper(CacheBlk *_blk);
+    virtual ~CacheBlkPrintWrapper();
     void print(std::ostream &o, int verbosity = 0,
                const std::string &prefix = "") const;
 };
