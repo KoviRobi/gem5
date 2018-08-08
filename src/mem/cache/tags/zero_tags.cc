@@ -39,6 +39,9 @@
 
 #include "mem/cache/tags/zero_tags.hh"
 
+#include "base/logging.hh"
+#include "debug/TODO.hh"
+
 ZeroTags::ZeroTags(const ZeroTagsParams *p)
     : BaseTags(p), normalDataTags(p->normal_data_tags),
       zeroBlkSize(p->zero_block_size), zeroBlkMask(zeroBlkSize-1)
@@ -55,6 +58,7 @@ ZeroTags::setCache(BaseCache *_cache)
 CacheBlk *
 ZeroTags::findBlock(Addr addr, bool is_secure) const
 {
+    DPRINTF(TODO, "Looking up a block\n");
     return normalDataTags->findBlock(addr, is_secure);
 }
 
