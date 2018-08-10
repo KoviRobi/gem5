@@ -172,7 +172,7 @@ class BaseSetAssoc : public BaseTags
      * @param addr The addr to a find possible locations for.
      * @return The possible locations.
      */
-    const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const;
+    virtual const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const;
 
     /**
      * Insert the new block into the cache and update replacement data.

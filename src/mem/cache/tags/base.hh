@@ -207,14 +207,14 @@ class BaseTags : public ClockedObject
      * @param addr the address to align.
      * @return The block address.
      */
-    Addr blkAlign(Addr addr) const;
+    virtual Addr blkAlign(Addr addr) const;
 
     /**
      * Calculate the block offset of an address.
      * @param addr the address to get the offset of.
      * @return the block offset.
      */
-    int extractBlkOffset(Addr addr) const;
+    virtual int extractBlkOffset(Addr addr) const;
 
     /**
      * Limit the allocation for the cache ways.
