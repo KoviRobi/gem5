@@ -39,84 +39,116 @@
 
 #include "mem/cache/tags/zero_tags.hh"
 
-ZeroTags::ZeroTags(const ZeroTagsParams *p)
-    : BaseTags(p), normalDataTags(p->normal_data_tags),
-      zeroBlkSize(p->zero_block_size), zeroBlkMask(zeroBlkSize-1)
+#include <cstring>
+
+#include "base/logging.hh"
+#include "debug/ZeroTags.hh"
+
+ZeroTagsData::ZeroTagsData(const ZeroTagsDataParams *p) :
+    BaseSetAssoc(p), zeroBlk(new uint8_t[getBlockSize()]()) {}
+ZeroTagsData::~ZeroTagsData()
 {
+    delete[] zeroBlk;
 }
 
 void
-ZeroTags::setCache(BaseCache *_cache)
+ZeroTagsData::trySatisfyMigration(CacheBlk *blk)
 {
-    BaseTags::setCache(_cache);
-    normalDataTags->setCache(_cache);
+    if (std::memcmp(zeroBlk, blk->getConstDataPtr(), getBlockSize())) {
+        DPRINTF(ZeroTags, "Detected zero block %s\n", blk->print());
+    }
 }
 
-CacheBlk *
-ZeroTags::findBlock(Addr addr, bool is_secure) const
+ZeroTagsData *
+ZeroTagsDataParams::create()
 {
-    return normalDataTags->findBlock(addr, is_secure);
+    return new ZeroTagsData(this);
 }
 
-void
-ZeroTags::invalidate(CacheBlk *blk)
+ZeroTags::ZeroTags(const ZeroTagsParams *p) :
+    BaseSetAssoc(p), dataTags(p->data_tags)
 {
-    normalDataTags->invalidate(blk);
+}
+
+ZeroTags::~ZeroTags()
+{
 }
 
 void
 ZeroTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
 {
-    normalDataTags->insertBlock(pkt, blk);
+    dataTags->insertBlock(pkt, blk);
 }
 
-Addr
-ZeroTags::regenerateBlkAddr(const CacheBlk* blk) const
+void
+ZeroTags::invalidate(CacheBlk *blk)
 {
-    return normalDataTags->regenerateBlkAddr(blk);
-}
-
-int
-ZeroTags::extractBlkOffset(Addr addr) const
-{
-    return normalDataTags->extractBlkOffset(addr);
-}
-
-Addr
-ZeroTags::extractTag(Addr addr) const
-{
-    return normalDataTags->extractTag(addr);
-}
-
-ReplaceableEntry*
-ZeroTags::findBlockBySetAndWay(int set, int way) const
-{
-    return normalDataTags->findBlockBySetAndWay(set, way);
+    dataTags->invalidate(blk);
 }
 
 CacheBlk*
 ZeroTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
 {
-    return normalDataTags->accessBlock(addr, is_secure, lat);
+    return dataTags->accessBlock(addr, is_secure, lat);
+}
+
+CacheBlk*
+ZeroTags::findBlock(Addr addr, bool is_secure) const
+{
+    return dataTags->findBlock(addr, is_secure);
 }
 
 CacheBlk*
 ZeroTags::findVictim(Addr addr, const bool is_secure,
-                                std::vector<CacheBlk*>& evict_blks) const
+                     std::vector<CacheBlk*>& evict_blks) const
 {
-    return normalDataTags->findVictim(addr, is_secure, evict_blks);
+    return dataTags->findVictim(addr, is_secure, evict_blks);
+}
+const std::vector<CacheBlk*>
+ZeroTags::getPossibleLocations(Addr addr) const
+{
+    return dataTags->getPossibleLocations(addr);
+}
+
+void
+ZeroTags::setWayAllocationMax(int ways)
+{
+    dataTags->setWayAllocationMax(ways);
+}
+
+int
+ZeroTags::getWayAllocationMax() const
+{
+    return dataTags->getWayAllocationMax();
+}
+
+Addr
+ZeroTags::extractTag(Addr addr) const
+{
+    return dataTags->extractTag(addr);
+}
+
+Addr
+ZeroTags::regenerateBlkAddr(const CacheBlk* blk) const
+{
+    return dataTags->regenerateBlkAddr(blk);
 }
 
 void
 ZeroTags::forEachBlk(std::function<void(CacheBlk &)> visitor)
 {
-    normalDataTags->forEachBlk(visitor);
+    dataTags->forEachBlk(visitor);
 }
 
 bool
 ZeroTags::anyBlk(std::function<bool(CacheBlk &)> visitor)
 {
-    return normalDataTags->anyBlk(visitor);
+    return dataTags->anyBlk(visitor);
+}
+
+void
+ZeroTags::trySatisfyMigration(CacheBlk *blk)
+{
 }
 
 ZeroTags *

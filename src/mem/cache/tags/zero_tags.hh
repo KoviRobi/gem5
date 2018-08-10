@@ -41,31 +41,46 @@
 #define __MEM_CACHE_TAGS_ZERO_TAGS_HH__
 
 #include "mem/cache/blk.hh"
-#include "mem/cache/tags/base.hh"
+#include "mem/cache/tags/base_set_assoc.hh"
 #include "params/ZeroTags.hh"
+#include "params/ZeroTagsData.hh"
 
-class ZeroTags : public BaseTags
+class ZeroTagsData : public BaseSetAssoc
 {
   protected:
-    BaseTags *normalDataTags;
-    const unsigned zeroBlkSize;
-    const unsigned zeroBlkMask;
+    const uint8_t *zeroBlk;
+
+  public:
+    ZeroTagsData(const ZeroTagsDataParams *p);
+    ~ZeroTagsData();
+    void trySatisfyMigration(CacheBlk *blk) override;
+};
+
+class ZeroTags : public BaseSetAssoc
+{
+  protected:
+    ZeroTagsData *dataTags;
+
 
   public:
     ZeroTags(const ZeroTagsParams *p);
-    void setCache(BaseCache *_cache) override;
-    CacheBlk *findBlock(Addr addr, bool is_secure) const;
-    ReplaceableEntry* findBlockBySetAndWay(int set, int way) const;
-    void invalidate(CacheBlk *blk);
-    void insertBlock(const PacketPtr pkt, CacheBlk *blk);
-    Addr regenerateBlkAddr(const CacheBlk* blk) const;
-    int extractBlkOffset(Addr addr) const;
-    Addr extractTag(Addr addr) const;
-    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat);
+    ~ZeroTags();
+    CacheBlk* findBlock(Addr addr, bool is_secure) const override;
+    void invalidate(CacheBlk *blk) override;
+    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override;
+    Addr regenerateBlkAddr(const CacheBlk* blk) const override;
+    int extractBlkOvvset(Addr addr) const override;
+    Addr extractTag(Addr addr) const override;
+    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override;
     CacheBlk* findVictim(Addr addr, const bool is_secure,
-                                 std::vector<CacheBlk*>& evict_blks) const;
-    void forEachBlk(std::function<void(CacheBlk &)> visitor);
-    bool anyBlk(std::function<bool(CacheBlk &)> visitor);
+                         std::vector<CacheBlk*>& evict_blks) const override;
+    void forEachBlk(std::function<void(CacheBlk &)> visitor) override;
+    bool anyBlk(std::function<bool(CacheBlk &)> visitor) override;
+    const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const
+        override;
+    void setWayAllocationMax(int ways) override;
+    int getWayAllocationMax() const override;
+    void trySatisfyMigration(CacheBlk *blk) override;
 
   protected:
     /* TODO: stats */

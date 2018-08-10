@@ -37,3 +37,5 @@ Source('base_set_assoc.cc')
 Source('fa_lru.cc')
 Source('sector_tags.cc')
 Source('zero_tags.cc')
+
+DebugFlag('ZeroTags')
