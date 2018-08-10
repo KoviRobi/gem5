@@ -37,8 +37,8 @@
  * Authors: Robert Kovacsics
  */
 
-#ifndef __MEM_CACHE_TAGS_BASE_SET_ASSOC_HH__
-#define __MEM_CACHE_TAGS_BASE_SET_ASSOC_HH__
+#ifndef __MEM_CACHE_TAGS_ZERO_TAGS_HH__
+#define __MEM_CACHE_TAGS_ZERO_TAGS_HH__
 
 #include "mem/cache/blk.hh"
 #include "mem/cache/tags/base.hh"
@@ -71,4 +71,4 @@ class ZeroTags : public BaseTags
     /* TODO: stats */
 };
 
-#endif //__MEM_CACHE_TAGS_BASE_SET_ASSOC_HH__
+#endif //__MEM_CACHE_TAGS_ZERO_TAGS_HH__
