@@ -54,13 +54,13 @@ SectorTags::SectorTags(const SectorTagsParams *p)
       numSectors(numBlocks / p->num_blocks_per_sector),
       numSets(numSectors / p->assoc),
       blks(numBlocks), secBlks(numSectors), sets(numSets),
-      sectorShift(floorLog2(blkSize)),
+      sectorShift(floorLog2(_blkSize)),
       setShift(sectorShift + floorLog2(numBlocksPerSector)),
       tagShift(setShift + floorLog2(numSets)),
       sectorMask(numBlocksPerSector - 1), setMask(numSets - 1)
 {
     // Check parameters
-    fatal_if(blkSize < 4 || !isPowerOf2(blkSize),
+    fatal_if(_blkSize < 4 || !isPowerOf2(_blkSize),
              "Block size must be at least 4 and a power of 2");
     fatal_if(!isPowerOf2(numSets),
              "# of sets must be non-zero and a power of 2");
@@ -95,7 +95,7 @@ SectorTags::SectorTags(const SectorTagsParams *p)
                 blk = &blks[blk_index];
 
                 // Associate a data chunk to the block
-                blk->setDataPtr(&dataBlks[blkSize*blk_index]);
+                blk->setDataPtr(&dataBlks[_blkSize*blk_index]);
                 blk->setOwner(this);
 
                 // Associate sector block to this block
@@ -164,9 +164,9 @@ SectorTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
         // Check if the block to be accessed is available. If not,
         // apply the accessLatency on top of block->whenReady.
         if (blk->whenReady > curTick() &&
-            cache->ticksToCycles(blk->whenReady - curTick()) >
+            _cache->ticksToCycles(blk->whenReady - curTick()) >
             accessLatency) {
-            lat = cache->ticksToCycles(blk->whenReady - curTick()) +
+            lat = _cache->ticksToCycles(blk->whenReady - curTick()) +
             accessLatency;
         }
 

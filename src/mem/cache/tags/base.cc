@@ -59,13 +59,13 @@
 #include "sim/system.hh"
 
 BaseTags::BaseTags(const Params *p)
-    : ClockedObject(p), blkSize(p->block_size), blkMask(blkSize - 1),
+    : ClockedObject(p), _blkSize(p->block_size), blkMask(_blkSize - 1),
       size(p->size),
       lookupLatency(p->tag_latency),
       accessLatency(p->sequential_access ?
                     p->tag_latency + p->data_latency :
                     std::max(p->tag_latency, p->data_latency)),
-      cache(nullptr),
+      _cache(nullptr),
       warmupBound((p->warmup_percentage/100.0) * (p->size / p->block_size)),
       warmedUp(false), numBlocks(p->size / p->block_size),
       dataBlks(new uint8_t[p->size]) // Allocate data storage in one big chunk
@@ -73,10 +73,22 @@ BaseTags::BaseTags(const Params *p)
 }
 
 void
-BaseTags::setCache(BaseCache *_cache)
+BaseTags::setCache(BaseCache *cache)
 {
-    assert(!cache);
-    cache = _cache;
+    assert(!_cache);
+    _cache = cache;
+}
+
+BaseCache *
+BaseTags::getCache()
+{
+    return _cache;
+}
+
+unsigned
+BaseTags::getBlockSize()
+{
+    return _blkSize;
 }
 
 void
@@ -92,7 +104,7 @@ BaseTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
 
     // Deal with what we are bringing in
     MasterID master_id = pkt->req->masterId();
-    assert(master_id < cache->system->maxMasters());
+    assert(master_id < _cache->system->maxMasters());
     occupancies[master_id]++;
 
     // Insert block with tag, src master id and task id
@@ -215,13 +227,13 @@ BaseTags::regStats()
         ;
 
     occupancies
-        .init(cache->system->maxMasters())
+        .init(_cache->system->maxMasters())
         .name(name() + ".occ_blocks")
         .desc("Average occupied blocks per requestor")
         .flags(nozero | nonan)
         ;
-    for (int i = 0; i < cache->system->maxMasters(); i++) {
-        occupancies.subname(i, cache->system->getMasterName(i));
+    for (int i = 0; i < _cache->system->maxMasters(); i++) {
+        occupancies.subname(i, _cache->system->getMasterName(i));
     }
 
     avgOccs
@@ -229,8 +241,8 @@ BaseTags::regStats()
         .desc("Average percentage of cache occupancy")
         .flags(nozero | total)
         ;
-    for (int i = 0; i < cache->system->maxMasters(); i++) {
-        avgOccs.subname(i, cache->system->getMasterName(i));
+    for (int i = 0; i < _cache->system->maxMasters(); i++) {
+        avgOccs.subname(i, _cache->system->getMasterName(i));
     }
 
     avgOccs = occupancies / Stats::constant(numBlocks);
