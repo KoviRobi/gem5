@@ -130,12 +130,6 @@ BaseSetAssoc::findBlock(Addr addr, bool is_secure) const
     return blk;
 }
 
-ReplaceableEntry*
-BaseSetAssoc::findBlockBySetAndWay(int set, int way) const
-{
-    return sets[set].blks[way];
-}
-
 BaseSetAssoc *
 BaseSetAssocParams::create()
 {
