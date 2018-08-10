@@ -74,6 +74,7 @@ FALRU::FALRU(const Params *p)
     head->set = 0;
     head->way = 0;
     head->setDataPtr(&dataBlks[0]);
+    head->setOwner(this);
 
     for (unsigned i = 1; i < numBlocks - 1; i++) {
         blks[i].prev = &(blks[i-1]);
@@ -83,6 +84,7 @@ FALRU::FALRU(const Params *p)
 
         // Associate a data chunk to the block
         blks[i].setDataPtr(&dataBlks[blkSize*i]);
+        blks[i].setOwner(this);
     }
 
     tail = &(blks[numBlocks - 1]);
@@ -91,6 +93,7 @@ FALRU::FALRU(const Params *p)
     tail->set = 0;
     tail->way = numBlocks - 1;
     tail->setDataPtr(&dataBlks[(numBlocks - 1) * blkSize]);
+    tail->setOwner(this);
 
     cacheTracking.init(head, tail);
 }

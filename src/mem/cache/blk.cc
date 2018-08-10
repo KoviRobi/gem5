@@ -41,13 +41,28 @@
 #include "mem/cache/blk.hh"
 
 #include "base/cprintf.hh"
+#include "mem/cache/tags/base.hh"
 
-CacheBlk::CacheBlk() : _data(nullptr)
+CacheBlk::CacheBlk() : _data(nullptr), _owner(nullptr), _blkSize(0)
 {
     invalidate();
 }
 
 CacheBlk::~CacheBlk() {}
+
+void
+CacheBlk::setOwner(BaseTags *owner)
+{
+    assert(_owner == nullptr);
+    _owner = owner;
+    _blkSize = owner->getBlockSize();
+}
+
+unsigned
+CacheBlk::getBlockSize()
+{
+    return _blkSize;
+}
 
 const uint8_t*
 CacheBlk::getConstDataPtr() const
@@ -66,6 +81,7 @@ void
 CacheBlk::setData(const void *src, const Addr size,
                   const Addr offset)
 {
+    assert(offset+size <= _blkSize);
     std::memcpy(_data+offset, src, size);
 }
 

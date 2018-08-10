@@ -61,6 +61,8 @@
 #include "mem/packet.hh"
 #include "mem/request.hh"
 
+class BaseTags;
+
 /**
  * Cache block status bit assignments
  */
@@ -94,6 +96,8 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      * referenced by this block.
      */
     uint8_t *_data;
+    BaseTags *_owner;
+    unsigned _blkSize;
 
   public:
     /** Task Id associated with this block */
@@ -174,6 +178,13 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
     CacheBlk(const CacheBlk&) = delete;
     CacheBlk& operator=(const CacheBlk&) = delete;
     virtual ~CacheBlk();
+
+    /**
+     * Sets the owner of this cache block.
+     */
+    virtual void setOwner(BaseTags *owner);
+
+    virtual unsigned getBlockSize();
 
     /**
      * Get this cache block's data pointer

@@ -114,6 +114,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
     // whether the connected master is actually snooping or not
 
     tempBlock = new TempCacheBlk(blkSize);
+    tempBlock->setOwner(tags);
 
     tags->setCache(this);
     if (prefetcher)

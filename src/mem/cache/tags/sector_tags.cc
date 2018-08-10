@@ -96,6 +96,7 @@ SectorTags::SectorTags(const SectorTagsParams *p)
 
                 // Associate a data chunk to the block
                 blk->setDataPtr(&dataBlks[blkSize*blk_index]);
+                blk->setOwner(this);
 
                 // Associate sector block to this block
                 blk->setSectorBlock(sec_blk);
