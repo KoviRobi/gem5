@@ -289,12 +289,6 @@ BaseTags::blkAlign(Addr addr) const
     return addr & ~blkMask;
 }
 
-int
-BaseTags::extractBlkOffset(Addr addr) const
-{
-    return (addr & blkMask);
-}
-
 void
 BaseTags::setWayAllocationMax(int ways)
 {
