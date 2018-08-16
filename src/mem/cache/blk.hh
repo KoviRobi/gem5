@@ -353,7 +353,7 @@ class TempCacheBlk final : public CacheBlk
     /**
      * Invalidate the block and clear all state.
      */
-    void invalidate();
+    void invalidate() override;
 
     void insert(const Addr addr, const bool is_secure,
                 const int src_master_ID=0, const uint32_t task_ID=0) override;
