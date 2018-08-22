@@ -36,6 +36,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Authors: Gabe Black
+//          Robert Kovacsics
 
 let {{
     SPAlignmentCheckCode = '''
@@ -703,5 +704,99 @@ def template LoadStoreLitU64Constructor {{
         %(constructor)s;
         assert(!%(use_uops)d);
         setExcAcRel(exclusive, acrel);
+    }
+}};
+
+def template ZeroRegionDeclare {{
+    class %(class_name)s : public %(base_class)s
+    {
+      public:
+
+        /// Constructor.
+        %(class_name)s(ExtMachInst machInst,
+                IntRegIndex _dest, IntRegIndex _offset);
+
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+        Fault initiateAcc(ExecContext *, Trace::InstRecord *) const override;
+        Fault completeAcc(PacketPtr, ExecContext *,
+                          Trace::InstRecord *) const override;
+
+        void
+        annotateFault(ArmFault *fault) override
+        {
+            %(fa_code)s
+        }
+    };
+}};
+
+def template ZeroRegionConstructor {{
+    %(class_name)s::%(class_name)s(ExtMachInst machInst,
+            IntRegIndex _dest, IntRegIndex _offset)
+         : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s,
+                 _offset, _dest, INTREG_ZERO, UXTX, 0)
+    {
+        %(constructor)s;
+    }
+}};
+
+def template ZeroRegionExecute {{
+    Fault %(class_name)s::execute(ExecContext *xc,
+                                  Trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        Fault fault = NoFault;
+
+        %(op_decl)s;
+        %(op_rd)s;
+        unsigned memAccessFlags = %(mem_flags)s;
+        %(ea_code)s;
+
+        if (fault == NoFault) {
+            %(memacc_code)s;
+        }
+
+        if (fault == NoFault) {
+            fault = writeMemAtomic(xc, traceData, Mem, EA,
+                                   memAccessFlags, NULL);
+        }
+
+        if (fault == NoFault) {
+            %(op_wb)s;
+        }
+
+        return fault;
+    }
+}};
+
+def template ZeroRegionInitiateAcc {{
+    Fault %(class_name)s::initiateAcc(ExecContext *xc,
+                                      Trace::InstRecord *traceData) const
+    {
+        Addr EA;
+        Fault fault = NoFault;
+
+        %(op_decl)s;
+        %(op_rd)s;
+        unsigned memAccessFlags = %(mem_flags)s;
+        %(ea_code)s;
+
+        if (fault == NoFault) {
+            %(memacc_code)s;
+        }
+
+        if (fault == NoFault) {
+            fault = writeMemTiming(xc, traceData, Mem, EA, memAccessFlags,
+                                   NULL);
+        }
+
+        return fault;
+    }
+}};
+
+def template ZeroRegionCompleteAcc {{
+    Fault %(class_name)s::completeAcc(PacketPtr pkt, ExecContext *xc,
+                                      Trace::InstRecord *traceData) const
+    {
+        return NoFault;
     }
 }};
