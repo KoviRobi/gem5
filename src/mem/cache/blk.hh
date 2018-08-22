@@ -189,6 +189,13 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      */
     virtual BaseTags *getOwner() const;
 
+    /**
+     * Get block's address.
+     *
+     * @return addr Address value.
+     */
+    virtual Addr getAddr() const;
+
     virtual unsigned getBlockSize() const;
 
     /**
@@ -356,7 +363,7 @@ class TempCacheBlk final : public CacheBlk
      *
      * @return addr Address value.
      */
-    Addr getAddr() const;
+    Addr getAddr() const override;
 };
 
 /**

@@ -166,11 +166,7 @@ BaseCache::CacheSlavePort::processSendRetry()
 Addr
 BaseCache::regenerateBlkAddr(CacheBlk* blk)
 {
-    if (blk != tempBlock) {
-        return tags->regenerateBlkAddr(blk);
-    } else {
-        return tempBlock->getAddr();
-    }
+    return blk->getAddr();
 }
 
 void

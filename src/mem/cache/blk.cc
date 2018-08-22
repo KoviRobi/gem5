@@ -64,6 +64,12 @@ CacheBlk::getOwner() const
     return _owner;
 }
 
+Addr
+CacheBlk::getAddr() const
+{
+    return getOwner()->regenerateBlkAddr(this);
+}
+
 unsigned
 CacheBlk::getBlockSize() const
 {
