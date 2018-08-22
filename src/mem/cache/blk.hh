@@ -196,7 +196,7 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      */
     virtual Addr getAddr() const;
 
-    virtual unsigned getBlockSize();
+    virtual unsigned getBlockSize() const;
 
     /**
      * Get this cache block's data pointer

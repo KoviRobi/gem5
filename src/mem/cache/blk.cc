@@ -71,7 +71,7 @@ CacheBlk::getAddr() const
 }
 
 unsigned
-CacheBlk::getBlockSize()
+CacheBlk::getBlockSize() const
 {
     return _blkSize;
 }
