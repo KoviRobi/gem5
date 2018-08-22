@@ -58,6 +58,18 @@ CacheBlk::setOwner(BaseTags *owner)
     _blkSize = owner->getBlockSize();
 }
 
+BaseTags *
+CacheBlk::getOwner() const
+{
+    return _owner;
+}
+
+Addr
+CacheBlk::getAddr() const
+{
+    return getOwner()->regenerateBlkAddr(this);
+}
+
 unsigned
 CacheBlk::getBlockSize()
 {

@@ -184,6 +184,18 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
      */
     virtual void setOwner(BaseTags *owner);
 
+    /**
+     * Gets the owner of this cache block.
+     */
+    virtual BaseTags *getOwner() const;
+
+    /**
+     * Get block's address.
+     *
+     * @return addr Address value.
+     */
+    virtual Addr getAddr() const;
+
     virtual unsigned getBlockSize();
 
     /**
@@ -351,7 +363,7 @@ class TempCacheBlk final : public CacheBlk
      *
      * @return addr Address value.
      */
-    Addr getAddr() const;
+    Addr getAddr() const override;
 };
 
 /**
