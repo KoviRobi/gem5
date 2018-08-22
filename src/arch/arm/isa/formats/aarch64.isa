@@ -37,6 +37,7 @@
 //          Thomas Grocutt
 //          Mbou Eyole
 //          Giacomo Gabrielli
+//          Robert Kovacsics
 
 output header {{
 namespace Aarch64
@@ -782,8 +783,18 @@ namespace Aarch64
                     return new Unknown64(machInst);
                 }
             } else if (bits(machInst, 21) == 1) {
-                if (bits(machInst, 11, 10) != 0x2)
+                // Have XX11 1X00 XX1X XXXX XXXX 00SS SSSO OOOO
+                // Need 0011 1000 0010 0000 0000 00SS SSSO OOOO
+                if (bits(machInst, 11, 10) == 0x0 &&
+                    bits(machInst, 31,12) == 0x38200) {
+                    IntRegIndex rstart =
+                        (IntRegIndex)(uint32_t)bits(machInst, 9, 5);
+                    IntRegIndex roffset =
+                        (IntRegIndex)(uint32_t)bits(machInst, 4, 0);
+                    return new STRZERO(machInst, rstart, roffset);
+                } else if (bits(machInst, 11, 10) != 0x2) {
                     return new Unknown64(machInst);
+                }
                 if (!bits(machInst, 14))
                     return new Unknown64(machInst);
                 IntRegIndex rt = (IntRegIndex)(uint32_t)bits(machInst, 4, 0);

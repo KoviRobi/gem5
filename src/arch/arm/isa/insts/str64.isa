@@ -36,6 +36,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // Authors: Gabe Black
+//          Robert Kovacsics
 
 let {{
 
@@ -289,6 +290,50 @@ let {{
         StorePre64(mnem, NameBase + "_PRE", size, flavor=flavor).emit()
         StorePost64(mnem, NameBase + "_POST", size, flavor=flavor).emit()
         StoreReg64(mnem, NameBase + "_REG", size, flavor=flavor).emit()
+
+    class StoreZeroReg64(object):
+        def __init__(self, mnemonic, class_name):
+            self.mnemonic = mnemonic
+            self.class_name = class_name
+
+        def emit(self):
+            codeBlobs = {}
+            # log2(size) # TODO: RMK35
+            codeBlobs["mem_flags"] = "ArmISA::TLB::MustBeOne" + \
+                                    "|ArmISA::TLB::AllowUnaligned" + \
+                                    "|Request::REGION_ZERO"
+            # Address computation
+            eaCode = SPAlignmentCheckCode + "EA = XBase;"
+
+            codeBlobs["ea_code"] = eaCode
+
+            # Code that actually handles the access
+            accCode = 'Mem_ud = cSwap(XDest_ud, isBigEndian64(xc->tcBase()));'
+            codeBlobs["memacc_code"] = accCode
+            # TODO: RMK35
+            codeBlobs["fa_code"] =  '''
+                fault->annotate(ArmFault::SAS, 2);
+                fault->annotate(ArmFault::SSE, false);
+                fault->annotate(ArmFault::SRT, dest);
+                fault->annotate(ArmFault::SF, false);
+                fault->annotate(ArmFault::AR, false);
+            '''
+
+            instFlags = []
+
+            iop = InstObjParams(self.mnemonic, self.class_name,
+                                "ArmISA::MemoryImm64",
+                                codeBlobs, instFlags)
+
+            # templates in src/arch/arm/isa/templates/mem64.isa
+            global header_output, decoder_output, exec_output
+            header_output += eval('ZeroRegionDeclare').subst(iop)
+            decoder_output += eval('ZeroRegionConstructor').subst(iop)
+            exec_output += eval('ZeroRegionExecute').subst(iop) + \
+                        eval('ZeroRegionInitiateAcc').subst(iop) + \
+                        eval('ZeroRegionCompleteAcc').subst(iop)
+
+    StoreZeroReg64("strz", "STRZERO").emit()
 
     buildStores64("strb", "STRB64", 1)
     buildStores64("strh", "STRH64", 2)
