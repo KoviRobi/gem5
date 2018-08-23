@@ -1231,22 +1231,7 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
 
     // Check for transient state allocations. If any of the entries listed
     // for eviction has a transient state, the allocation fails
-    for (const auto& blk : evict_blks) {
-        if (blk->isValid()) {
-            Addr repl_addr = regenerateBlkAddr(blk);
-            MSHR *repl_mshr = mshrQueue.findMatch(repl_addr, blk->isSecure());
-            if (repl_mshr) {
-                // must be an outstanding upgrade or clean request
-                // on a block we're about to replace...
-                assert((!blk->isWritable() && repl_mshr->needsWritable()) ||
-                       repl_mshr->isCleaning());
-
-                // too hard to replace block with transient state
-                // allocation failed, block not inserted
-                return nullptr;
-            }
-        }
-    }
+    if (transientEvicts(evict_blks)) return nullptr;
 
     // The victim will be replaced by a new entry, so increase the replacement
     // counter if a valid block is being replaced
@@ -1574,6 +1559,27 @@ BaseCache::unserialize(CheckpointIn &cp)
               "caches or drain them properly before taking checkpoints.\n");
     }
 }
+
+bool
+BaseCache::transientEvicts(std::vector<CacheBlk*> evict_blks)
+{
+    for (const auto& blk : evict_blks) {
+        if (blk->isValid()) {
+            Addr repl_addr = regenerateBlkAddr(blk);
+            MSHR *repl_mshr = mshrQueue.findMatch(repl_addr, blk->isSecure());
+            if (repl_mshr) {
+                // must be an outstanding upgrade or clean request
+                // on a block we're about to replace...
+                assert((!blk->isWritable() && repl_mshr->needsWritable()) ||
+                       repl_mshr->isCleaning());
+
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 void
 BaseCache::regStats()

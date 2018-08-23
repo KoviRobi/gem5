@@ -34,6 +34,8 @@ SimObject('Cache.py')
 
 Source('base.cc')
 Source('blk.cc')
+Source('zero_blk.cc')
+Source('zero_cache.cc')
 Source('cache.cc')
 Source('mshr.cc')
 Source('mshr_queue.cc')
@@ -54,4 +56,3 @@ DebugFlag('HWPrefetch')
 # it explicitly even above and beyond CacheAll.
 CompoundFlag('CacheAll', ['Cache', 'CachePort', 'CacheRepl', 'CacheVerbose',
                           'HWPrefetch'])
-
