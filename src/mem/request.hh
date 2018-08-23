@@ -132,6 +132,7 @@ class Request
          * cache block.  There is no need for a read/modify/write
          */
         CACHE_BLOCK_ZERO            = 0x00010000,
+        REGION_ZERO                 = 0x00004000,
 
         /** The request should not cause a memory access. */
         NO_ACCESS                   = 0x00080000,
@@ -816,6 +817,7 @@ class Request
     bool isKernel() const { return _flags.isSet(KERNEL); }
     bool isAtomicReturn() const { return _flags.isSet(ATOMIC_RETURN_OP); }
     bool isAtomicNoReturn() const { return _flags.isSet(ATOMIC_NO_RETURN_OP); }
+    bool isRegionZero() const { return _flags.isSet(REGION_ZERO); }
 
     bool
     isAtomic() const

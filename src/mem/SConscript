@@ -107,6 +107,7 @@ DebugFlag('StackDist')
 DebugFlag("DRAMSim2")
 DebugFlag('HMCController')
 DebugFlag('SerialLink')
+DebugFlag('ZeroCache')
 
 DebugFlag("MemChecker")
 DebugFlag("MemCheckerMonitor")
