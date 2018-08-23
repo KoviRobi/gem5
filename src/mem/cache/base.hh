@@ -651,7 +651,7 @@ class BaseCache : public MemObject
      * @param allocate Whether to allocate a block or use the temp block
      * @return Pointer to the new cache block.
      */
-    CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
+    virtual CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
                          PacketList &writebacks, bool allocate);
 
     /**
@@ -666,7 +666,7 @@ class BaseCache : public MemObject
      * @param writebacks A list of writeback packets for the evicted blocks
      * @return the allocated block
      */
-    CacheBlk *allocateBlock(const PacketPtr pkt, PacketList &writebacks);
+    virtual CacheBlk *allocateBlock(const PacketPtr pkt, PacketList &writebacks);
     /**
      * Evict a cache block.
      *
@@ -692,7 +692,7 @@ class BaseCache : public MemObject
      *
      * @param blk Block to invalidate
      */
-    void invalidateBlock(CacheBlk *blk);
+    virtual void invalidateBlock(CacheBlk *blk);
 
     /**
      * Create a writeback request for the given block.
@@ -701,6 +701,12 @@ class BaseCache : public MemObject
      * @return The writeback request for the block.
      */
     PacketPtr writebackBlk(CacheBlk *blk);
+
+    /**
+     * Checks if a block to be evicted has transient state, i.e. it is
+     * in the MSHR queue.
+     */
+    bool transientEvicts(std::vector<CacheBlk*> evict_blks);
 
     /**
      * Create a writeclean request for the given block.
