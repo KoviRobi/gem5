@@ -83,13 +83,6 @@ class ArmSystem(System):
     semihosting = Param.ArmSemihosting(NULL,
         "Enable support for the Arm semihosting by settings this parameter")
 
-    zero_range_start = Param.Addr(0,
-        "Start of the zero-tags region. Set the start and end to the same "
-        "address to disable")
-    zero_range_end = Param.Addr(0,
-        "End of the zero-tags region. Set the start and end to the same "
-        "address to disable")
-
     m5ops_base = Param.Addr(0,
         "Base of the 64KiB PA range used for memory-mapped m5ops. Set to 0 "
         "to disable.")

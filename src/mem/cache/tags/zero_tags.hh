@@ -40,46 +40,73 @@
 #ifndef __MEM_CACHE_TAGS_ZERO_TAGS_HH__
 #define __MEM_CACHE_TAGS_ZERO_TAGS_HH__
 
-#include "mem/cache/blk.hh"
 #include "mem/cache/tags/base_set_assoc.hh"
+#include "mem/cache/zero_cache.hh"
+#include "mem/packet.hh"
+#include "params/ZeroCacheDataTags.hh"
 #include "params/ZeroTags.hh"
-#include "params/ZeroTagsData.hh"
 
-class ZeroTagsData : public BaseSetAssoc
+class CacheBlk;
+class ZeroBlk;
+class ZeroTags;
+
+class ZeroCacheDataTags : public BaseSetAssoc
 {
   protected:
     const uint8_t *zeroBlk;
 
   public:
-    ZeroTagsData(const ZeroTagsDataParams *p);
-    ~ZeroTagsData();
+    ZeroCacheDataTags(const ZeroCacheDataTagsParams *p);
+    ~ZeroCacheDataTags();
     void trySatisfyMigration(CacheBlk *blk) override;
 };
 
 class ZeroTags : public BaseSetAssoc
 {
   protected:
-    ZeroTagsData *dataTags;
-
+    // unsigned zeroSetShift;
+    // unsigned zeroTagShift;
+    // unsigned zeroSetMask;
+    const unsigned zeroBlkSize;
+    std::vector<ZeroBlk> zeroBlks;
+    const unsigned numZeroSets;
+    std::vector<CacheSet<ZeroBlk>> zeroSets;
+    unsigned zeroSetShift;
+    unsigned zeroSetMask;
+    unsigned zeroTagShift;
+    ZeroCache *_cache;
+    Addr zeroTagRegionStart;
+    Addr zeroTagRegionEnd;
 
   public:
     ZeroTags(const ZeroTagsParams *p);
     ~ZeroTags();
-    CacheBlk* findBlock(Addr addr, bool is_secure) const override;
-    void invalidate(CacheBlk *blk) override;
-    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override;
-    Addr regenerateBlkAddr(const CacheBlk* blk) const override;
-    int extractBlkOvvset(Addr addr) const override;
+
+    // ZeroBlk *loadZeroBlock(Addr addr);
+    void invalidateZeroBlock(ZeroBlk *blk);
+    void insertZeroBlock(const PacketPtr pkt, ZeroBlk *blk);
+    ZeroBlk *accessZeroBlock(Addr addr, bool is_secure, Cycles &lat);
+    ZeroBlk *findZeroBlock(Addr addr, bool is_secure) const;
+    ZeroBlk *findZeroVictim(Addr addr, const bool is_secure,
+                         std::vector<CacheBlk*>& evict_blks) const;
+    const std::vector<ZeroBlk*> getPossibleZeroLocations(Addr addr) const;
+
     Addr extractTag(Addr addr) const override;
-    CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override;
-    CacheBlk* findVictim(Addr addr, const bool is_secure,
-                         std::vector<CacheBlk*>& evict_blks) const override;
-    void forEachBlk(std::function<void(CacheBlk &)> visitor) override;
-    bool anyBlk(std::function<bool(CacheBlk &)> visitor) override;
-    const std::vector<CacheBlk*> getPossibleLocations(Addr addr) const
-        override;
-    void setWayAllocationMax(int ways) override;
-    int getWayAllocationMax() const override;
+    unsigned extractZeroSet(Addr addr) const;
+    Addr extractZeroTag(Addr addr) const;
+    Addr regenerateBlkAddr(const CacheBlk* blk) const override;
+    /**
+     * Converts the address for a zero-tag block
+     * (i.e. ZeroBlk::getAddr, or the regenerateBlkAddr(zeroBlk)
+     * above) into the first address that the given zero-tag block is
+     * tagging (i.e. the address for the first zero-tag entry; the
+     * next entry tags the address at the next data cache block size,
+     * as a data-cache block size is the smalles tagged unit).
+     */
+    Addr tagToBlockAddr(Addr tagAddr) const;
+
+    unsigned getZeroBlockSize() const;
+
     void trySatisfyMigration(CacheBlk *blk) override;
 
   protected:

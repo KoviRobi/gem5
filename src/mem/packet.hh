@@ -147,6 +147,7 @@ class MemCmd
         IsWrite,        //!< Data flows from requester to responder
         IsUpgrade,
         IsInvalidate,
+        IsZeroRegionInstr,
         IsClean,        //!< Cleans any existing dirty blocks
         NeedsWritable,  //!< Requires writable copy to complete in-cache
         IsRequest,      //!< Issued by requester
@@ -202,6 +203,7 @@ class MemCmd
     bool needsWritable() const     { return testCmdAttrib(NeedsWritable); }
     bool needsResponse() const     { return testCmdAttrib(NeedsResponse); }
     bool isInvalidate() const      { return testCmdAttrib(IsInvalidate); }
+    bool isZeroRegionInstr() const { return testCmdAttrib(IsZeroRegionInstr); }
     bool isEviction() const        { return testCmdAttrib(IsEviction); }
     bool isClean() const           { return testCmdAttrib(IsClean); }
     bool fromCache() const         { return testCmdAttrib(FromCache); }
@@ -535,6 +537,7 @@ class Packet : public Printable, public DataContainer
     }
     bool needsResponse() const       { return cmd.needsResponse(); }
     bool isInvalidate() const        { return cmd.isInvalidate(); }
+    bool isZeroRegionInstr() const   { return cmd.isZeroRegionInstr(); }
     bool isEviction() const          { return cmd.isEviction(); }
     bool isClean() const             { return cmd.isClean(); }
     bool fromCache() const           { return cmd.fromCache(); }
