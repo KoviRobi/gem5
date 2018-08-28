@@ -223,7 +223,6 @@ class BaseSetAssoc : public BaseTags
 
     bool anyBlk(std::function<bool(CacheBlk &)> visitor) override;
 
-  private:
     /**
      * Calculate the set index from the address.
      *
