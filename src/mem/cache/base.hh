@@ -703,6 +703,12 @@ class BaseCache : public MemObject
     PacketPtr writebackBlk(CacheBlk *blk);
 
     /**
+     * Checks if a block to be evicted has transient state, i.e. it is
+     * in the MSHR queue.
+     */
+    bool transientEvicts(std::vector<CacheBlk*> evict_blks);
+
+    /**
      * Create a writeclean request for the given block.
      *
      * Creates a request that writes the block to the cache below
