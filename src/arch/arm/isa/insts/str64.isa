@@ -322,7 +322,7 @@ let {{
             instFlags = []
 
             iop = InstObjParams(self.mnemonic, self.class_name,
-                                "ArmISA::MemoryReg64",
+                                "ArmISA::MemoryImm64",
                                 codeBlobs, instFlags)
 
             # templates in src/arch/arm/isa/templates/mem64.isa

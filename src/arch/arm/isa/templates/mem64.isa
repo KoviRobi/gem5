@@ -733,7 +733,7 @@ def template ZeroRegionConstructor {{
     %(class_name)s::%(class_name)s(ExtMachInst machInst,
             IntRegIndex _dest, IntRegIndex _offset)
          : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s,
-                 _offset, _dest, INTREG_ZERO, UXTX, 0)
+                 _offset, _dest, 0)
     {
         %(constructor)s;
     }
