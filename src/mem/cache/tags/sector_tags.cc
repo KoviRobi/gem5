@@ -245,6 +245,12 @@ SectorTags::findBlock(Addr addr, bool is_secure) const
     return nullptr;
 }
 
+ReplaceableEntry*
+SectorTags::findBlockBySetAndWay(int set, int way) const
+{
+    return sets[set][way];
+}
+
 CacheBlk*
 SectorTags::findVictim(Addr addr, const bool is_secure,
                        std::vector<CacheBlk*>& evict_blks) const

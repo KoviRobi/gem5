@@ -188,6 +188,15 @@ class FALRU : public BaseTags
     CacheBlk* findBlock(Addr addr, bool is_secure) const override;
 
     /**
+     * Find a block given set and way.
+     *
+     * @param set The set of the block.
+     * @param way The way of the block.
+     * @return The block.
+     */
+    ReplaceableEntry* findBlockBySetAndWay(int set, int way) const override;
+
+    /**
      * Find replacement victim based on address. The list of evicted blocks
      * only contains the victim.
      *

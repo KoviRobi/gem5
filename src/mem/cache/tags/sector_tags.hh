@@ -166,6 +166,15 @@ class SectorTags : public BaseTags
     CacheBlk* findBlock(Addr addr, bool is_secure) const override;
 
     /**
+     * Find a sector block given set and way.
+     *
+     * @param set The set of the block.
+     * @param way The way of the block.
+     * @return The block.
+     */
+    ReplaceableEntry* findBlockBySetAndWay(int set, int way) const override;
+
+    /**
      * Find replacement victim based on address.
      *
      * @param addr Address to find a victim for.

@@ -184,6 +184,13 @@ FALRU::findBlock(Addr addr, bool is_secure) const
     return blk;
 }
 
+ReplaceableEntry*
+FALRU::findBlockBySetAndWay(int set, int way) const
+{
+    assert(set == 0);
+    return &blks[way];
+}
+
 CacheBlk*
 FALRU::findVictim(Addr addr, const bool is_secure,
                   std::vector<CacheBlk*>& evict_blks) const
