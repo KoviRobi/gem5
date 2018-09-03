@@ -286,7 +286,7 @@ def makeArmSystem(mem_mode, machine_type, num_cpus=1, mdesc=None,
     # TODO: RMK35: Do zero-tag stuff here
     self.zero_range_start = Addr(mdesc.mem())
     # TODO: RMK35: zero-tag minimum granularity
-    zero_tag_size = (self.zero_rante_start/64+7)/8
+    zero_tag_size = (self.zero_range_start/64+7)/8
     self.zero_range_end = long(self.zero_range_start + zero_tag_size)
     size_remain = long(self.zero_range_end)
     for region in self.realview._mem_regions:
