@@ -97,18 +97,13 @@ class FALRU(BaseTags):
     min_tracked_cache_size = Param.MemorySize("128kB", "Minimum cache size for"
                                               " which we track statistics")
 
-class ZeroTagsData(BaseSetAssoc):
-    type = 'ZeroTagsData'
-    cxx_class = 'ZeroTagsData'
-    cxx_header = "mem/cache/tags/zero_tags.hh"
-
 class ZeroTags(BaseSetAssoc):
     type = 'ZeroTags'
     cxx_class = 'ZeroTags'
     cxx_header = "mem/cache/tags/zero_tags.hh"
 
-    data_tags = Param.ZeroTagsData(ZeroTagsData(), "Data tag store")
-
+    zero_tag_block_size = Param.Int(Parent.cache_line_size,
+                                    "block size in bytes")
     # A zero-tag cache block entry looks like:
     #
     # | is_zero 1 bit | is_valid 1 bit | way 6 bits |
@@ -119,7 +114,7 @@ class ZeroTags(BaseSetAssoc):
     # all zero
     zero_tag_entry_size = Param.Int(8,
                                     "Size of one entry in the zero-tag")
-    zero_tag_start = Param.Int(Parent.zero_range_start,
-                               "Start of the zero-tag memory region")
-    zero_tag_end = Param.Int(Parent.zero_range_end,
-                               "End of the zero-tag memory region")
+    zero_tag_region_start = Param.Addr(Parent.zero_range_start,
+                                       "Start of the zero-tag memory region")
+    zero_tag_region_end = Param.Addr(Parent.zero_range_end,
+                                     "End of the zero-tag memory region")

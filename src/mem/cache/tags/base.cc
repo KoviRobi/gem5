@@ -80,7 +80,7 @@ BaseTags::setCache(BaseCache *cache)
 }
 
 BaseCache *
-BaseTags::getCache()
+BaseTags::getCache() const
 {
     return _cache;
 }

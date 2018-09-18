@@ -48,12 +48,14 @@ ZeroBlk::~ZeroBlk() {}
 void
 ZeroBlk::setOwner(BaseTags *owner)
 {
+    CacheBlk::setOwner(owner);
     ZeroTags *zeroTagsOwner = dynamic_cast<ZeroTags*>(owner);
     assert(zeroTagsOwner);
     assert(_owner == nullptr);
     _owner = zeroTagsOwner;
     _blkSize = _owner->getZeroBlockSize();
-
+    // blkSize is in bytes, not in bits
+    ways.resize(8*getBlockSize());
 }
 
 ZeroTags *
@@ -62,68 +64,89 @@ ZeroBlk::getOwner() const
     return _owner;
 }
 
+Addr
+ZeroBlk::getAddr() const
+{
+    return getOwner()->regenerateZeroBlkAddr(this).addr;
+}
+
+/// TODO: RMk35: TagAddr?
 void
-ZeroBlk::setEntries(unsigned size)
+ZeroBlk::insert(const Addr tag, const bool is_secure, const int src_master_ID,
+                const uint32_t task_ID)
 {
-    entries.resize(size);
-}
-
-void
-ZeroBlk::setEntryValid(Addr addr, bool valid)
-{
-    return;
-}
-
-void
-ZeroBlk::setEntryWay(Addr addr, unsigned way)
-{
-    return;
-}
-
-void
-ZeroBlk::setEntryZero(Addr addr, bool zero)
-{
-    int entry_count = entries.size();
-    entries[addr%entry_count].is_zero = zero;
-}
-
-bool
-ZeroBlk::isEntryValid(Addr addr)
-{
-    int entry_count = entries.size();
-    return entries[addr%entry_count].is_valid;
-}
-
-bool
-ZeroBlk::isEntryZero(Addr addr)
-{
-    int entry_count = entries.size();
-    return entries[addr%entry_count].is_zero;
-}
-
-unsigned
-ZeroBlk::getEntryWay(Addr addr)
-{
-    int entry_count = entries.size();
-    return entries[addr%entry_count].way;
-}
-
-std::vector<CacheBlk*>
-ZeroBlk::getValidNonzeros(std::vector<CacheSet<CacheBlk>> sets)
-{
-    std::vector<CacheBlk*> blks;
-    Addr zblk_addr = getAddr();
-    Addr entry_addr = getOwner()->tagToBlockAddr(zblk_addr);
-    for (const auto &entry : entries) {
-        if (entry.is_valid && ~entry.is_zero) {
-            CacheBlk *blk = sets[getOwner()->extractSet(entry_addr)]
-                .blks[entry.way];
-            blks.push_back(blk);
-        }
-        // this->getBlockSize() might be the size of the zero block
-        entry_addr += getOwner()->getBlockSize();
+    CacheBlk::insert(tag, is_secure, src_master_ID, task_ID);
+    for (auto &entry : ways) {
+        entry = ENTRY_NOT_VALID;
     }
-    return blks;
+}
+
+/// TODO: RMK35: Make a note that this 'tag_addr' isn't the 'tag
+/// address' in cache terminology, but an address in the zero-tag
+/// region
+void
+ZeroBlk::setEntryWay(TagAddr tag_addr, short way)
+{
+    ways[tag_addr.addr % getBlockSize()] = way;
+}
+
+void
+ZeroBlk::invalidateEntry(TagAddr tag_addr)
+{
+    ways[tag_addr.addr % getBlockSize()] = ENTRY_NOT_VALID;
+}
+
+void
+ZeroBlk::setEntryZero(TagAddr tag_addr, bool zero)
+{
+    // TODO: RMK35 Remove hardcoded number
+    int byte_index = (tag_addr.addr / 8) % getBlockSize();
+    int bit_mask = 1 << (tag_addr.addr % 8);
+    if (zero)
+        _data[byte_index] &= ~bit_mask;
+    else
+        _data[byte_index] |= bit_mask;
+}
+
+bool
+ZeroBlk::isEntryZero(TagAddr tag_addr)
+{
+    int byte_index = (tag_addr.addr / 8) % getBlockSize();
+    int bit_mask = 1 << (tag_addr.addr % 8);
+    return _data[byte_index] & bit_mask;
+}
+
+bool
+ZeroBlk::isEntryValid(TagAddr tag_addr)
+{
+    return ways[tag_addr.addr % getBlockSize()] != ENTRY_NOT_VALID;
+}
+
+short
+ZeroBlk::getEntryWay(TagAddr tag_addr)
+{
+    return ways[tag_addr.addr % getBlockSize()];
+}
+
+void
+ZeroBlk::maintainInclusitivity(const BaseTags *tags,
+                               std::vector<CacheBlk *> &evict_blks)
+{
+    Addr tag_addr = getAddr();
+    // TODO: RMK35 Remove hardcoded number
+    Addr data_addr = tag_addr << 6;
+    // TODO: RMK35: I am not sure about this
+    int set = getOwner()->extractSet(data_addr);
+    for (int i = 0; i < getBlockSize(); i += 8) {
+        uint8_t tags8 = _data[i];
+        for (int j = 0; j < 8; ++j) {
+            if ((ways[8*i+j] != ENTRY_NOT_VALID) && ((tags8 & (1<<j)) != 0)) {
+                CacheBlk *blk = static_cast<CacheBlk*>(
+                    tags->findBlockBySetAndWay(set, ways[8*i+j]));
+                evict_blks.push_back(blk);
+            }
+        }
+    }
 }
 
 #endif // __MEM_CACHE_ZERO_BLK_H__

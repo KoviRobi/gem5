@@ -446,7 +446,7 @@ class BaseCache : public MemObject
      * @param forward_time The tick at which we can process dependent requests
      * @param request_time The tick at which the block lookup is compete
      */
-    void handleTimingReqMiss(PacketPtr pkt, MSHR *mshr, CacheBlk *blk,
+    virtual void handleTimingReqMiss(PacketPtr pkt, MSHR *mshr, CacheBlk *blk,
                              Tick forward_time, Tick request_time);
 
     /**
@@ -651,7 +651,7 @@ class BaseCache : public MemObject
      * @param allocate Whether to allocate a block or use the temp block
      * @return Pointer to the new cache block.
      */
-    CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
+    virtual CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
                          PacketList &writebacks, bool allocate);
 
     /**
@@ -666,7 +666,7 @@ class BaseCache : public MemObject
      * @param writebacks A list of writeback packets for the evicted blocks
      * @return the allocated block
      */
-    CacheBlk *allocateBlock(const PacketPtr pkt, PacketList &writebacks);
+    virtual CacheBlk *allocateBlock(const PacketPtr pkt, PacketList &writebacks);
     /**
      * Evict a cache block.
      *
@@ -692,7 +692,7 @@ class BaseCache : public MemObject
      *
      * @param blk Block to invalidate
      */
-    void invalidateBlock(CacheBlk *blk);
+    virtual void invalidateBlock(CacheBlk *blk);
 
     /**
      * Create a writeback request for the given block.

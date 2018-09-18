@@ -221,7 +221,10 @@ MemCmd::commandInfo[] =
       InvalidateResp, "InvalidateReq" },
     /* Invalidation Response */
     { SET2(IsInvalidate, IsResponse),
-      InvalidCmd, "InvalidateResp" }
+      InvalidCmd, "InvalidateResp" },
+    /* Read Zero Tag */
+    { SET3(IsRead, IsRequest, NeedsResponse),
+            ReadResp, "ReadZeroTag" },
 };
 
 const uint8_t*

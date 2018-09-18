@@ -123,6 +123,7 @@ class MSHR : public QueueEntry, public Printable
 
         enum Source {
             FromCPU,
+            FromZeroTag,
             FromSnoop,
             FromPrefetcher
         };

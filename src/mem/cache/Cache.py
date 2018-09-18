@@ -81,7 +81,7 @@ class BaseCache(MemObject):
     prefetch_on_access = Param.Bool(False,
          "Notify the hardware prefetcher on every access (not just misses)")
 
-    tags = Param.BaseTags(ZeroTags(), "Tag store")
+    tags = Param.BaseTags(BaseSetAssoc(), "Tag store")
     replacement_policy = Param.BaseReplacementPolicy(LRURP(),
         "Replacement policy")
 
@@ -129,3 +129,19 @@ class NoncoherentCache(BaseCache):
     # This is typically a last level cache and any clean
     # writebacks would be unnecessary traffic to the main memory.
     writeback_clean = False
+
+class ZeroCache(Cache):
+    type = 'ZeroCache'
+    cxx_header = 'mem/cache/zero_cache.hh'
+
+    tags = ZeroTags()
+
+    # Get the block size from the parent (system)
+    zero_block_size = Param.Int(Parent.cache_line_size,
+                                "zero-tag block size in bytes "
+                                "(only counting 1-bit tags)")
+
+    zero_tag_region_start = Param.Addr(Parent.zero_range_start,
+                                       "Start of the zero-tag memory region")
+    zero_tag_region_end = Param.Addr(Parent.zero_range_end,
+                                     "End of the zero-tag memory region")
