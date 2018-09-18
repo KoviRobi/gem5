@@ -795,6 +795,14 @@ Cache::serviceMSHRTargets(MSHR *mshr, const PacketPtr pkt, CacheBlk *blk,
             cpuSidePort.schedTimingResp(tgt_pkt, completion_time, true);
             break;
 
+          case MSHR::Target::FromZeroTag:
+            if (blk && blk->isValid() && !mshr->isForward) {
+                satisfyRequest(tgt_pkt, blk, true, mshr->hasPostDowngrade());
+            } else {
+                panic("Unknown case!\n");
+            }
+            break;
+
           case MSHR::Target::FromPrefetcher:
             assert(tgt_pkt->cmd == MemCmd::HardPFReq);
             if (blk)

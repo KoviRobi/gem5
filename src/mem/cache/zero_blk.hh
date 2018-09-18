@@ -44,21 +44,15 @@
 #include "mem/cache/tags/cacheset.hh"
 #include "mem/cache/tags/zero_tags.hh"
 
-class ZeroEntry
-{
-  public:
-    bool is_zero = false;
-    bool is_valid = false;
-    short way = 0;
-};
-
 class ZeroBlk : public CacheBlk
 {
-    // Needs a better name: in the simplest zero-cache, one 'cache
-    // line' or 'cache block' a bit (here one entry) indicates that
-    // the address that bit represents is all zero.
-    std::vector<ZeroEntry> entries;
-
+    /// The tags are stored in the CacheBlk::_data field.  This is
+    /// metadata for it, which represents whether the cache has a
+    /// data-block, if it is non-zero.
+    std::vector<short> ways;
+    enum Way { ENTRY_NOT_VALID = 0xff };
+    /// Shadows the one in CacheBlk, at least for ZeroBlk functions,
+    /// so it should be the same as CacheBlk::_owner
     ZeroTags *_owner;
 
   public:
@@ -67,16 +61,17 @@ class ZeroBlk : public CacheBlk
 
     void setOwner(BaseTags *owner) override;
     ZeroTags *getOwner() const override;
+    Addr getAddr() const override;
+    void insert(const Addr data_addr, const bool is_secure,
+                const int src_master_ID, const uint32_t task_ID) override;
 
-    virtual void setEntries(unsigned size);
-    virtual void setEntryValid(Addr addr, bool valid);
-    virtual void setEntryZero(Addr addr, bool zero);
-    virtual void setEntryWay(Addr addr, unsigned way);
+    virtual void setEntryZero(TagAddr tag_addr, bool zero);
+    virtual void setEntryWay(TagAddr tag_addr, short way);
+    virtual void invalidateEntry(TagAddr tag_addr);
+    virtual bool isEntryZero(TagAddr tag_addr);
+    virtual bool isEntryValid(TagAddr tag_addr);
+    virtual short getEntryWay(TagAddr tag_addr);
 
-    virtual bool isEntryValid(Addr addr);
-    virtual bool isEntryZero(Addr addr);
-    virtual unsigned getEntryWay(Addr addr);
-
-    virtual std::vector<CacheBlk*>
-    getValidNonzeros(std::vector<CacheSet<CacheBlk>> sets);
+    virtual void maintainInclusitivity(const BaseTags *dataTags,
+                                       std::vector<CacheBlk*>& evict_blks);
 };

@@ -263,8 +263,10 @@ MSHR::allocate(Addr blk_addr, unsigned blk_size, PacketPtr target,
     assert(targets.isReset());
     // Don't know of a case where we would allocate a new MSHR for a
     // snoop (mem-side request), so set source according to request here
-    Target::Source source = (target->cmd == MemCmd::HardPFReq) ?
-        Target::FromPrefetcher : Target::FromCPU;
+    Target::Source source =
+        (target->cmd == MemCmd::HardPFReq) ? Target::FromPrefetcher :
+        (target->cmd == MemCmd::ReadZeroTag) ? Target::FromZeroTag :
+        Target::FromCPU;
     targets.add(target, when_ready, _order, source, true, alloc_on_fill);
     assert(deferredTargets.isReset());
 }

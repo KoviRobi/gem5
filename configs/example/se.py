@@ -47,6 +47,7 @@ from __future__ import print_function
 import optparse
 import sys
 import os
+import math
 
 import m5
 from m5.defines import buildEnv
@@ -177,10 +178,16 @@ if options.smt and options.num_cpus > 1:
     fatal("You cannot use SMT with multiple CPUs!")
 
 np = options.num_cpus
+zero_tag_region_start = Addr(options.mem_size)
+zero_tag_region_end = zero_tag_region_start + \
+                      long(math.ceil(long(zero_tag_region_start) /
+                                     options.cacheline_size))
 system = System(cpu = [CPUClass(cpu_id=i) for i in xrange(np)],
                 mem_mode = test_mem_mode,
-                mem_ranges = [AddrRange(options.mem_size)],
-                cache_line_size = options.cacheline_size)
+                mem_ranges = [AddrRange(zero_tag_region_end)],
+                cache_line_size = options.cacheline_size,
+                zero_range_start = zero_tag_region_start,
+                zero_range_end = zero_tag_region_end)
 
 if numThreads > 1:
     system.multi_thread = True

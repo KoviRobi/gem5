@@ -169,7 +169,7 @@ class BaseTags : public ClockedObject
      * @param _cache Pointer to parent cache.
      */
     virtual void setCache(BaseCache *cache);
-    virtual BaseCache *getCache();
+    virtual BaseCache *getCache() const;
 
     /**
      * Get the block size

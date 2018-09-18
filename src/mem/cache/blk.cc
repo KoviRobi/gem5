@@ -55,7 +55,7 @@ CacheBlk::setOwner(BaseTags *owner)
 {
     assert(_owner == nullptr);
     _owner = owner;
-    _blkSize = owner->getBlockSize();
+    _blkSize = _owner->getBlockSize();
 }
 
 BaseTags *

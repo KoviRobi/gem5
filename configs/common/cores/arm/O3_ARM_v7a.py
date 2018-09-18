@@ -160,7 +160,7 @@ class O3_ARM_v7a_ICache(Cache):
     writeback_clean = True
 
 # Data Cache
-class O3_ARM_v7a_DCache(Cache):
+class O3_ARM_v7a_DCache(ZeroCache):
     tag_latency = 2
     data_latency = 2
     response_latency = 2
@@ -188,7 +188,7 @@ class O3_ARM_v7aWalkCache(Cache):
     writeback_clean = True
 
 # L2 Cache
-class O3_ARM_v7aL2(Cache):
+class O3_ARM_v7aL2(ZeroCache):
     tag_latency = 12
     data_latency = 12
     response_latency = 12
@@ -201,5 +201,4 @@ class O3_ARM_v7aL2(Cache):
     clusivity = 'mostly_excl'
     # Simple stride prefetcher
     prefetcher = StridePrefetcher(degree=8, latency = 1)
-    tags = ZeroTags()
     repl_policy = RandomRP()

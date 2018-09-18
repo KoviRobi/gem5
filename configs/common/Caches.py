@@ -47,7 +47,7 @@ from m5.objects import *
 # starting point, and specific parameters can be overridden in the
 # specific instantiations.
 
-class L1Cache(Cache):
+class L1Cache(ZeroCache):
     assoc = 2
     tag_latency = 2
     data_latency = 2
@@ -63,7 +63,7 @@ class L1_ICache(L1Cache):
 class L1_DCache(L1Cache):
     pass
 
-class L2Cache(Cache):
+class L2Cache(ZeroCache):
     assoc = 8
     tag_latency = 20
     data_latency = 20
