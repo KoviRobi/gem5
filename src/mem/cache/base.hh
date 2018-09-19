@@ -666,7 +666,8 @@ class BaseCache : public MemObject
      * @param writebacks A list of writeback packets for the evicted blocks
      * @return the allocated block
      */
-    CacheBlk *allocateBlock(const PacketPtr pkt, PacketList &writebacks);
+    virtual CacheBlk *allocateBlock(const PacketPtr pkt,
+                                    PacketList &writebacks);
     /**
      * Evict a cache block.
      *
@@ -692,7 +693,7 @@ class BaseCache : public MemObject
      *
      * @param blk Block to invalidate
      */
-    void invalidateBlock(CacheBlk *blk);
+    virtual void invalidateBlock(CacheBlk *blk);
 
     /**
      * Create a writeback request for the given block.
