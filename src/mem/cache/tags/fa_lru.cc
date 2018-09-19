@@ -58,11 +58,11 @@
 FALRU::FALRU(const Params *p)
     : BaseTags(p),
 
-      cacheTracking(p->min_tracked_cache_size, size, blkSize)
+      cacheTracking(p->min_tracked_cache_size, size, _blkSize)
 {
-    if (!isPowerOf2(blkSize))
+    if (!isPowerOf2(_blkSize))
         fatal("cache block size (in bytes) `%d' must be a power of two",
-              blkSize);
+              _blkSize);
     if (!isPowerOf2(size))
         fatal("Cache Size must be power of 2 for now");
 
@@ -83,7 +83,7 @@ FALRU::FALRU(const Params *p)
         blks[i].way = i;
 
         // Associate a data chunk to the block
-        blks[i].setDataPtr(&dataBlks[blkSize*i]);
+        blks[i].setDataPtr(&dataBlks[_blkSize*i]);
         blks[i].setOwner(this);
     }
 
@@ -92,7 +92,7 @@ FALRU::FALRU(const Params *p)
     tail->next = nullptr;
     tail->set = 0;
     tail->way = numBlocks - 1;
-    tail->setDataPtr(&dataBlks[(numBlocks - 1) * blkSize]);
+    tail->setDataPtr(&dataBlks[(numBlocks - 1) * _blkSize]);
     tail->setOwner(this);
 
     cacheTracking.init(head, tail);
@@ -144,9 +144,9 @@ FALRU::accessBlock(Addr addr, bool is_secure, Cycles &lat,
         // Check if the block to be accessed is available. If not,
         // apply the accessLatency on top of block->whenReady.
         if (blk->whenReady > curTick() &&
-            cache->ticksToCycles(blk->whenReady - curTick()) >
+            _cache->ticksToCycles(blk->whenReady - curTick()) >
             accessLatency) {
-            lat = cache->ticksToCycles(blk->whenReady - curTick()) +
+            lat = _cache->ticksToCycles(blk->whenReady - curTick()) +
             accessLatency;
         }
         mask = blk->inCachesMask;

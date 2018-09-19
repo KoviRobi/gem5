@@ -60,7 +60,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
      replacementPolicy(p->replacement_policy)
 {
     // Check parameters
-    if (blkSize < 4 || !isPowerOf2(blkSize)) {
+    if (_blkSize < 4 || !isPowerOf2(_blkSize)) {
         fatal("Block size must be at least 4 and a power of 2");
     }
     if (!isPowerOf2(numSets)) {
@@ -70,7 +70,7 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
         fatal("associativity must be greater than zero");
     }
 
-    setShift = floorLog2(blkSize);
+    setShift = floorLog2(_blkSize);
     setMask = numSets - 1;
     tagShift = setShift + floorLog2(numSets);
 
@@ -88,8 +88,8 @@ BaseSetAssoc::BaseSetAssoc(const Params *p)
             // Locate next cache block
             blk = &blks[blkIndex];
 
-            // Associate a data chunk to the block
-            blk->setDataPtr(&dataBlks[blkSize*blkIndex]);
+            // Associate a data chunk to the block and take ownership
+            blk->setDataPtr(&dataBlks[_blkSize*blkIndex]);
             blk->setOwner(this);
 
             // Associate a replacement data entry to the block
@@ -166,9 +166,9 @@ BaseSetAssoc::accessBlock(Addr addr, bool is_secure, Cycles &lat)
         // Check if the block to be accessed is available. If not,
         // apply the accessLatency on top of block->whenReady.
         if (blk->whenReady > curTick() &&
-            cache->ticksToCycles(blk->whenReady - curTick()) >
+            _cache->ticksToCycles(blk->whenReady - curTick()) >
             accessLatency) {
-            lat = cache->ticksToCycles(blk->whenReady - curTick()) +
+            lat = _cache->ticksToCycles(blk->whenReady - curTick()) +
                 accessLatency;
         }
 

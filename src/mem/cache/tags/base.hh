@@ -72,7 +72,7 @@ class BaseTags : public ClockedObject
 {
   protected:
     /** The block size of the cache. */
-    const unsigned blkSize;
+    const unsigned _blkSize;
     /** Mask out all bits that aren't part of the block offset. */
     const Addr blkMask;
     /** The size of the cache. */
@@ -86,7 +86,7 @@ class BaseTags : public ClockedObject
      */
     const Cycles accessLatency;
     /** Pointer to the parent cache. */
-    BaseCache *cache;
+    BaseCache *_cache;
 
     /**
      * The number of tags that need to be touched to meet the warmup
@@ -168,7 +168,13 @@ class BaseTags : public ClockedObject
      * Set the parent cache back pointer.
      * @param _cache Pointer to parent cache.
      */
-    void setCache(BaseCache *_cache);
+    virtual void setCache(BaseCache *cache);
+    virtual BaseCache *getCache() const;
+
+    /**
+     * Get the block size
+     */
+    virtual unsigned getBlockSize();
 
     /**
      * Register local statistics.
