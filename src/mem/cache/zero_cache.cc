@@ -248,7 +248,7 @@ ZeroCache::packetToReadTagPacket(PacketPtr pkt)
                                                pkt->req->masterId(),
                                                pkt->req->time());
     req->setExtraData(data_addr);
-    Packet *zero_tag_pkt = new Packet(req, MemCmd::ReadReq);
+    Packet *zero_tag_pkt = new Packet(req, MemCmd::ReadZeroTag);
     zero_tag_pkt->allocate();
     return zero_tag_pkt;
 }

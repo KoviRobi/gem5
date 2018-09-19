@@ -134,6 +134,7 @@ class MemCmd
         FlushReq,      //request for a cache flush
         InvalidateReq,   // request for address to be invalidated
         InvalidateResp,
+        ReadZeroTag,
         NUM_MEM_CMDS
     };
 
