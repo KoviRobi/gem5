@@ -42,6 +42,7 @@
 #include <algorithm>
 
 #include "base/logging.hh"
+#include "debug/ZeroCache.hh"
 #include "mem/cache/tags/zero_tags.hh"
 #include "mem/cache/zero_blk.hh"
 
@@ -186,6 +187,10 @@ void
 ZeroCache::zeroRegionInstr(PacketPtr pkt, CacheBlk *&blk)
 {
     /// TODO: Ensure zero-block is loaded
+    DPRINTF(ZeroCache, "Zeroing memory from 0x%08x of size 0x%08x\n",
+            pkt->getAddr(),
+            *(uint64_t*)pkt->getConstDataPtr());
+
     // TODO: RMK35-base: Zero region; invalidate blocks
     Addr start = pkt->getAddr();
     Addr size = (Addr)*(uint64_t*)pkt->getConstDataPtr();

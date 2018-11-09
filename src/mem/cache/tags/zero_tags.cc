@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "base/logging.hh"
+#include "debug/ZeroCache.hh"
 #include "mem/cache/blk.hh"
 #include "mem/cache/zero_blk.hh"
 
