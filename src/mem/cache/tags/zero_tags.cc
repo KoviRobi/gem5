@@ -120,31 +120,63 @@ CacheBlk *
 ZeroTags::findVictim(Addr addr, bool is_secure,
                          std::vector<CacheBlk*>& evict_blks) const
 {
-    return BaseSetAssoc::findVictim(addr, is_secure, evict_blks);
+    if (getZeroCache()->isZeroTagAddr(addr)) {
+        /// Since addr is already in the tag region, it doesn't need
+        /// to be converted
+        TagAddr tag_addr = (TagAddr){addr};
+        return findZeroVictim(tag_addr, is_secure, evict_blks);
+    } else {
+        return BaseSetAssoc::findVictim(addr, is_secure, evict_blks);
+    }
 }
 
 CacheBlk *
 ZeroTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
 {
-    return BaseSetAssoc::accessBlock(addr, is_secure, lat);
+    if (getZeroCache()->isZeroTagAddr(addr)) {
+        /// Since addr is already in the tag region, it doesn't need
+        /// to be converted
+        TagAddr tag_addr = (TagAddr){addr};
+        return accessZeroBlock(tag_addr, is_secure, lat);
+    } else {
+        return BaseSetAssoc::accessBlock(addr, is_secure, lat);
+    }
 }
 
 CacheBlk *
 ZeroTags::findBlock(Addr addr, bool is_secure) const
 {
-    return BaseSetAssoc::findBlock(addr, is_secure);
+    if (getZeroCache()->isZeroTagAddr(addr)) {
+        /// Since addr is already in the tag region, it doesn't need
+        /// to be converted
+        TagAddr tag_addr = (TagAddr){addr};
+        return findZeroBlock(tag_addr, is_secure);
+    } else {
+        return BaseSetAssoc::findBlock(addr, is_secure);
+    }
 }
 
 void
 ZeroTags::invalidate(CacheBlk *blk)
 {
+    Addr addr = blk->getAddr();
+    if (getZeroCache()->isZeroTagAddr(addr)) {
+        zeroTagsInUse--;
+    }
     BaseSetAssoc::invalidate(blk);
 }
 
 void
 ZeroTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
 {
-    BaseSetAssoc::insertBlock(pkt, blk);
+    Addr addr = pkt->getAddr();
+    if (getZeroCache()->isZeroTagAddr(addr)) {
+        ZeroBlk *zblk = dynamic_cast<ZeroBlk*>(blk);
+        assert(zblk != nullptr);
+        insertZeroBlock(pkt, zblk);
+    } else {
+        BaseSetAssoc::insertBlock(pkt, blk);
+    }
 }
 
 unsigned
@@ -156,26 +188,76 @@ ZeroTags::getZeroBlockSize() const
 void
 ZeroTags::insertZeroBlock(const PacketPtr pkt, ZeroBlk *blk)
 {
+    Addr tag_addr = pkt->getAddr();
+    assert(getZeroCache()->isZeroTagAddr(tag_addr));
+    assert(!blk->isValid());
+
+    // Deal with what we are bringing in
+    MasterID master_id = pkt->req->masterId();
+    assert(master_id < _cache->system->maxMasters());
+    blk->insert(extractZeroTag((TagAddr){tag_addr}), pkt->isSecure(),
+                master_id, pkt->req->taskId());
+
+    // Statistics
+    zeroTagOccupancies[master_id]++;
+    zeroTagsInUse++;
+    zeroTagAccesses++;
 }
 
 ZeroBlk*
 ZeroTags::accessZeroBlock(TagAddr tag_addr, bool is_secure, Cycles &lat)
 {
     ZeroBlk *zblk = findZeroBlock(tag_addr, is_secure);
+    zeroTagAccesses++;
+    if (zblk != nullptr) {
+        // If a cache hit
+        lat = accessLatency;
+        // Check if the block to be accessed is available. If not,
+        // apply the accessLatency on top of block->whenReady.
+        if (zblk->whenReady > curTick() &&
+            _cache->ticksToCycles(zblk->whenReady - curTick()) >
+            accessLatency) {
+            lat = _cache->ticksToCycles(zblk->whenReady - curTick()) +
+                accessLatency;
+        }
+
+        replacementPolicy->touch(zblk->replacementData);
+    } else {
+        lat = lookupLatency;
+    }
     return zblk;
 }
 
 ZeroBlk *
 ZeroTags::findZeroBlock(TagAddr tag_addr, bool is_secure) const
 {
-    return nullptr;
+    Addr tag = extractZeroTag(tag_addr);
+    unsigned set = extractZeroSet(tag_addr);
+    ZeroBlk *blk = zeroSets[set].findBlk(tag, is_secure);
+    return blk;
 }
 
 ZeroBlk*
 ZeroTags::findZeroVictim(TagAddr tag_addr, const bool is_secure,
                          std::vector<CacheBlk*>& evict_blks) const
 {
-    return nullptr;
+    // Get possible locations for the victim block
+    std::vector<ZeroBlk*> locations = getPossibleZeroLocations(tag_addr);
+
+    // Choose replacement victim from replacement candidates
+    // TODO: Policy to select block with least valid non-zero data
+    ZeroBlk* victim = static_cast<ZeroBlk*>(
+        replacementPolicy->getVictim(
+            std::vector<ReplaceableEntry*>(
+                locations.begin(), locations.end())));
+
+    victim->maintainInclusitivity(this, evict_blks);
+    evict_blks.push_back(victim);
+
+    DPRINTF(CacheRepl, "set %x, way %x: selecting blk for replacement\n",
+            victim->set, victim->way);
+
+    return victim;
 }
 
 const std::vector<ZeroBlk*>
@@ -203,6 +285,7 @@ ZeroTags::regenerateZeroBlkAddr(const ZeroBlk* blk) const
             | ((Addr)blk->set << zeroSetShift) };
 }
 
+// TODO:
 void
 ZeroTags::forEachBlk(std::function<void(CacheBlk &)> visitor)
 {
