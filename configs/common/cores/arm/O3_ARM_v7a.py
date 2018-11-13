@@ -201,5 +201,4 @@ class O3_ARM_v7aL2(Cache):
     clusivity = 'mostly_excl'
     # Simple stride prefetcher
     prefetcher = StridePrefetcher(degree=8, latency = 1)
-    tags = BaseSetAssoc()
     repl_policy = RandomRP()
