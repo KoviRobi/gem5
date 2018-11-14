@@ -95,6 +95,7 @@ CacheBlk::setData(const void *src, const Addr size,
 {
     assert(offset+size <= _blkSize);
     std::memcpy(_data+offset, src, size);
+    _owner->trySatisfyMigration(this);
 }
 
 void

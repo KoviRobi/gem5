@@ -215,6 +215,11 @@ ZeroTags::anyBlk(std::function<bool(CacheBlk &)> visitor)
     return BaseSetAssoc::anyBlk(visitor);
 }
 
+void
+ZeroTags::trySatisfyMigration(CacheBlk *blk)
+{
+}
+
 /// Statistics
 void
 ZeroTags::regStats()

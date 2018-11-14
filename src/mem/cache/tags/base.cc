@@ -314,3 +314,8 @@ BaseTags::invalidate(CacheBlk *blk)
 
     blk->invalidate();
 }
+
+void
+BaseTags::trySatisfyMigration(CacheBlk *blk)
+{
+}

@@ -295,6 +295,11 @@ class BaseTags : public ClockedObject
      */
     virtual bool anyBlk(std::function<bool(CacheBlk &)> visitor) = 0;
 
+    /**
+     * Try to see if the block can be migrated to a different tag
+     */
+    virtual void trySatisfyMigration(CacheBlk *block);
+
   private:
     /**
      * Update the reference stats using data from the input block

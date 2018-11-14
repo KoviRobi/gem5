@@ -109,6 +109,8 @@ class ZeroTags : public BaseSetAssoc
 
     unsigned getZeroBlockSize() const;
 
+    void trySatisfyMigration(CacheBlk *blk) override;
+
   public: /// Statistics
     void regStats() override;
   protected: /// Statistics
