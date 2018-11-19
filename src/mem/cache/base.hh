@@ -384,6 +384,7 @@ class BaseCache : public MemObject
         return clusivity == Enums::mostly_incl ||
             cmd == MemCmd::WriteLineReq ||
             cmd == MemCmd::ReadReq ||
+            cmd == MemCmd::ReadZeroTag ||
             cmd == MemCmd::WriteReq ||
             cmd.isPrefetch() ||
             cmd.isLLSC();
