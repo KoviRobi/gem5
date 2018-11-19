@@ -312,7 +312,7 @@ TempCacheBlk::~TempCacheBlk() { delete [] _data; };
 void
 TempCacheBlk::setDataPtr(uint8_t *ptr)
 {
-    fatal("TempCacheBlk::setDataPtr should never be called, as it"
+    panic("TempCacheBlk::setDataPtr should never be called, as it"
           " has a dynamically allocated _data field");
 }
 
