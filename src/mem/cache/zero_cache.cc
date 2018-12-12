@@ -52,15 +52,15 @@ ZeroCache::ZeroCache(const ZeroCacheParams *p)
       zeroTagRegion(p->zero_tag_region)
 {
     zeroTags = dynamic_cast<ZeroTags*>(p->tags);
-    assert(zeroTags != nullptr);
-    // Even though BaseCache does this, we need to do this again, as
-    // in the BaseCache constructor, the type of this is BaseCache*,
-    // and cannot be dynamic_cast to ZeroCache*.
+    assert(zeroTags);
     zeroTags->setZeroCache(this);
+    tempZeroBlock = new TempZeroBlk(zeroBlockSize);
+    tempZeroBlock->setOwner(zeroTags);
 }
 
 ZeroCache::~ZeroCache()
 {
+    delete tempZeroBlock;
 }
 
 bool

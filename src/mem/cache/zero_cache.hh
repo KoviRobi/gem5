@@ -47,6 +47,7 @@
 
 class CacheBlk;
 class ZeroBlk;
+class TempZeroBlk;
 class ZeroTags;
 
 typedef struct { Addr addr; } TagAddr;
@@ -55,6 +56,7 @@ class ZeroCache : public Cache
 {
   protected:
     ZeroTags *zeroTags;
+    TempZeroBlk *tempZeroBlock;
     unsigned zeroBlockSize;
     AddrRange zeroTagRegion;
 

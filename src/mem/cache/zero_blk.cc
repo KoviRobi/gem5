@@ -149,4 +149,47 @@ ZeroBlk::maintainInclusitivity(const BaseTags *tags,
     }
 }
 
+TempZeroBlk::TempZeroBlk(unsigned size) : ZeroBlk()
+{
+    _data = new uint8_t[size];
+}
+
+TempZeroBlk::~TempZeroBlk() {delete [] _data;}
+
+void
+TempZeroBlk::setDataPtr(uint8_t *ptr)
+{
+    panic("TempZeroBlk::setDataPtr should never be called, as it"
+          " has a dynamically allocated _data field");
+}
+
+void
+TempZeroBlk::invalidate()
+{
+    ZeroBlk::invalidate();
+    _addr = MaxAddr;
+}
+
+void
+TempZeroBlk::insert(const Addr addr, const bool is_secure,
+            const int src_master_ID, const uint32_t task_ID)
+{
+    // Set block address
+    _addr = addr;
+
+    // Set secure state
+    if (is_secure) {
+        status = BlkSecure;
+    } else {
+        status = 0;
+    }
+}
+
+Addr
+TempZeroBlk::getAddr() const
+{
+    return _addr;
+}
+
+
 #endif // __MEM_CACHE_ZERO_BLK_H__

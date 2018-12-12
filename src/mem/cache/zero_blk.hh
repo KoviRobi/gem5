@@ -73,3 +73,21 @@ class ZeroBlk : public CacheBlk
     virtual void maintainInclusitivity(const BaseTags *dataTags,
                                        std::vector<CacheBlk*>& evict_blks);
 };
+
+class TempZeroBlk : public ZeroBlk
+{
+  private:
+    Addr _addr;
+  public:
+    TempZeroBlk(unsigned size);
+    TempZeroBlk(const TempZeroBlk&) = delete;
+    TempZeroBlk& operator=(const TempZeroBlk&) = delete;
+    virtual ~TempZeroBlk();
+
+    void setDataPtr(uint8_t *ptr) override;
+    void invalidate() override;
+    void insert(const Addr addr, const bool is_secure,
+                const int src_master_ID=0,
+                const uint32_t task_ID=0) override;
+    Addr getAddr() const override;
+};
