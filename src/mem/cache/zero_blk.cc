@@ -42,7 +42,7 @@
 
 #include "mem/cache/zero_blk.hh"
 
-ZeroBlk::ZeroBlk() : CacheBlk() {}
+ZeroBlk::ZeroBlk() : CacheBlk(), _zeroTagsOwner(nullptr) {}
 ZeroBlk::~ZeroBlk() {}
 
 void
@@ -50,10 +50,10 @@ ZeroBlk::setOwner(BaseTags *owner)
 {
     CacheBlk::setOwner(owner);
     ZeroTags *zeroTagsOwner = dynamic_cast<ZeroTags*>(owner);
+    assert(_zeroTagsOwner == nullptr);
     assert(zeroTagsOwner);
-    assert(_owner == nullptr);
-    _owner = zeroTagsOwner;
-    _blkSize = _owner->getZeroBlockSize();
+    _zeroTagsOwner = zeroTagsOwner;
+    _blkSize = _zeroTagsOwner->getZeroBlockSize();
     // blkSize is in bytes, not in bits
     ways.resize(8*getBlockSize());
 }
@@ -61,7 +61,7 @@ ZeroBlk::setOwner(BaseTags *owner)
 ZeroTags *
 ZeroBlk::getOwner() const
 {
-    return _owner;
+    return _zeroTagsOwner;
 }
 
 Addr

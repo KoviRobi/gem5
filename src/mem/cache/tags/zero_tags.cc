@@ -107,8 +107,9 @@ void
 ZeroTags::setZeroCache(ZeroCache *zero_cache)
 {
     assert(!_zeroCache);
-    _zeroCache = dynamic_cast<ZeroCache*>(zero_cache);
-    assert(_zeroCache);
+    assert(!_cache || _cache == zero_cache);
+    _zeroCache = zero_cache;
+    _cache = zero_cache;
 }
 
 ZeroCache *

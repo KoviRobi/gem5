@@ -51,9 +51,7 @@ class ZeroBlk : public CacheBlk
     /// data-block, if it is non-zero.
     std::vector<short> ways;
     enum Way { ENTRY_NOT_VALID = 0xff };
-    /// Shadows the one in CacheBlk, at least for ZeroBlk functions,
-    /// so it should be the same as CacheBlk::_owner
-    ZeroTags *_owner;
+    ZeroTags *_zeroTagsOwner;
 
   public:
     ZeroBlk();
