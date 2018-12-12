@@ -56,8 +56,7 @@ class ZeroCache : public Cache
   protected:
     ZeroTags *zeroTags;
     unsigned zeroBlockSize;
-    Addr zeroTagRegionStart;
-    Addr zeroTagRegionEnd;
+    AddrRange zeroTagRegion;
 
   public:
     ZeroCache(const ZeroCacheParams *p);

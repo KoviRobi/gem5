@@ -124,9 +124,5 @@ class System(MemObject):
     if buildEnv['USE_KVM']:
         kvm_vm = Param.KvmVM(NULL, 'KVM VM (i.e., shared memory domain)')
 
-    zero_range_start = Param.Addr(0,
-        "Start of the zero-tags region. Set the start and end to the same "
-        "address to disable")
-    zero_range_end = Param.Addr(0,
-        "End of the zero-tags region. Set the start and end to the same "
-        "address to disable")
+    data_range = Param.AddrRange("Normal memory region")
+    zero_range = Param.AddrRange("Zero-tag region")

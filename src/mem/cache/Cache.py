@@ -141,7 +141,5 @@ class ZeroCache(Cache):
                                 "zero-tag block size in bytes "
                                 "(only counting 1-bit tags)")
 
-    zero_tag_region_start = Param.Addr(Parent.zero_range_start,
-                                       "Start of the zero-tag memory region")
-    zero_tag_region_end = Param.Addr(Parent.zero_range_end,
-                                     "End of the zero-tag memory region")
+    zero_tag_region = Param.AddrRange(Parent.zero_range,
+                                     "Zero-tag memory region")

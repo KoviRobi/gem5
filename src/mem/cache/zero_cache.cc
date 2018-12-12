@@ -49,8 +49,7 @@
 ZeroCache::ZeroCache(const ZeroCacheParams *p)
     : Cache(p),
       zeroBlockSize(p->zero_block_size),
-      zeroTagRegionStart(p->zero_tag_region_start),
-      zeroTagRegionEnd(p->zero_tag_region_end)
+      zeroTagRegion(p->zero_tag_region)
 {
     zeroTags = dynamic_cast<ZeroTags*>(p->tags);
     assert(zeroTags != nullptr);
@@ -67,19 +66,19 @@ ZeroCache::~ZeroCache()
 bool
 ZeroCache::isZeroTagAddr(Addr addr) const
 {
-    return zeroTagRegionStart <= addr && addr < zeroTagRegionEnd;
+    return zeroTagRegion.contains(addr);
 }
 
 Addr
 ZeroCache::tagToDataAddr(TagAddr tag_addr)
 {
-    return (tag_addr.addr-zeroTagRegionEnd)*zeroBlockSize;
+    return (tag_addr.addr-zeroTagRegion.end())*zeroBlockSize;
 }
 
 TagAddr
 ZeroCache::dataToTagAddr(Addr data_addr)
 {
-    Addr tag_addr = zeroTagRegionStart + data_addr/zeroBlockSize;
+    Addr tag_addr = zeroTagRegion.start() + data_addr/zeroBlockSize;
     assert(isZeroTagAddr(tag_addr));
     return (TagAddr){tag_addr};
 }
@@ -220,7 +219,7 @@ ZeroCache::zeroRegionInstr(PacketPtr pkt, CacheBlk *&blk)
     for (Addr zblk_addr = start; zblk_addr < end;
          zblk_addr += zero_block_coverage) {
 
-        ZeroBlk *zblk = zeroTags->findZeroBlock(dataToTagAddr(zblk_addr),
+        ZeroBlk *zblk = findZeroBlock(dataToTagAddr(zblk_addr),
                                       pkt->isSecure());
         // The zero block should always be in the cache, because
         // ZeroCache::access will detect that the address of this is

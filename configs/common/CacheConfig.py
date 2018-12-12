@@ -58,7 +58,8 @@ def config_cache(options, system):
     if options.cpu_type == "O3_ARM_v7a_3":
         try:
             from cores.arm.O3_ARM_v7a import *
-        except:
+        except e:
+            print(e)
             print("O3_ARM_v7a_3 is unavailable. Did you compile the O3 model?")
             sys.exit(1)
 
@@ -92,7 +93,9 @@ def config_cache(options, system):
 
         system.tol2bus = L2XBar(clk_domain = system.cpu_clk_domain)
         system.l2.cpu_side = system.tol2bus.master
-        system.l2.mem_side = system.membus.slave
+        system.zero_tag_controller = ZeroTagController()
+        system.l2.mem_side = system.zero_tag_controller.slave
+        system.zero_tag_controller.master = system.membus.slave
 
     if options.memchecker:
         system.memchecker = MemChecker()
