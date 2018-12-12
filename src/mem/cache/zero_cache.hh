@@ -37,8 +37,8 @@
  * Authors: Robert Kovacsics
  */
 
-#ifndef __MEM_CACHE_ZER_CACHEH__
-#define __MEM_CACHE_ZER_CACHEH__
+#ifndef __MEM_CACHE_ZERO_CACHE_HH__
+#define __MEM_CACHE_ZERO_CACHE_HH__
 
 #include "base/statistics.hh"
 #include "base/types.hh"
@@ -85,4 +85,4 @@ class ZeroCache : public Cache
     Stats::Scalar zeroReplacements;
 };
 
-#endif // __MEM_CACHE_ZER_CACHEH__
+#endif // __MEM_CACHE_ZERO_CACHE_HH__
