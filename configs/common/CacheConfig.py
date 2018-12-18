@@ -93,9 +93,7 @@ def config_cache(options, system):
 
         system.tol2bus = L2XBar(clk_domain = system.cpu_clk_domain)
         system.l2.cpu_side = system.tol2bus.master
-        system.zero_tag_controller = ZeroTagController()
-        system.l2.mem_side = system.zero_tag_controller.slave
-        system.zero_tag_controller.master = system.membus.slave
+        system.l2.mem_side = system.membus.slave
 
     if options.memchecker:
         system.memchecker = MemChecker()

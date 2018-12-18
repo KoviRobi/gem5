@@ -112,5 +112,10 @@ class ZeroTags(BaseSetAssoc):
     # gives us a coverage of 4KiB with 64B zero-tag blocks, and 64B
     # data tag blocks, where one entry says that a 64B data block is
     # all zero
+    # TODO: This isn't used
     zero_tag_entry_size = Param.Int(8,
                                     "Size of one entry in the zero-tag")
+
+    # Get replacement policy from the parent (cache)
+    zero_replacement_policy = Param.BaseReplacementPolicy(
+        Parent.replacement_policy, "Replacement policy")

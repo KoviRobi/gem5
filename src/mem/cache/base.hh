@@ -632,7 +632,7 @@ class BaseCache : public MemObject
      * @param from_cache Whether we have dealt with a packet from a cache
      * @param blk The block that should potentially be dropped
      */
-    void maintainClusivity(bool from_cache, CacheBlk *blk);
+    virtual void maintainClusivity(bool from_cache, CacheBlk *blk);
 
     /**
      * Handle a fill operation caused by a received packet.
@@ -652,8 +652,8 @@ class BaseCache : public MemObject
      * @param allocate Whether to allocate a block or use the temp block
      * @return Pointer to the new cache block.
      */
-    CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
-                         PacketList &writebacks, bool allocate);
+    virtual CacheBlk *handleFill(PacketPtr pkt, CacheBlk *blk,
+                                 PacketList &writebacks, bool allocate);
 
     /**
      * Allocate a new block and perform any necessary writebacks
@@ -1004,7 +1004,7 @@ class BaseCache : public MemObject
     {
         MSHR *mshr = mshrQueue.allocate(pkt->getBlockAddr(blkSize), blkSize,
                                         pkt, time, order++,
-                                        allocOnFill(pkt->cmd));
+                                        allocOnFill(pkt->cmd)|pkt->isZeroTagAccess());
 
         if (mshrQueue.isFull()) {
             setBlocked((BlockedCause)MSHRQueue_MSHRs);

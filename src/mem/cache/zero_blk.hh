@@ -70,8 +70,8 @@ class ZeroBlk : public CacheBlk
     virtual bool isEntryValid(TagAddr tag_addr);
     virtual short getEntryWay(TagAddr tag_addr);
 
-    virtual void maintainInclusitivity(const BaseTags *dataTags,
-                                       std::vector<CacheBlk*>& evict_blks);
+    // TODO: RMK35: virtual void maintainInclusitivity(const BaseTags *dataTags,
+    // TODO: RMK35:                                    std::vector<CacheBlk*>& evict_blks);
 };
 
 class TempZeroBlk : public ZeroBlk
