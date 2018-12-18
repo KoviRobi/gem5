@@ -128,26 +128,26 @@ ZeroBlk::getEntryWay(TagAddr tag_addr)
     return ways[tag_addr.addr % getBlockSize()];
 }
 
-void
-ZeroBlk::maintainInclusitivity(const BaseTags *tags,
-                               std::vector<CacheBlk *> &evict_blks)
-{
-    Addr tag_addr = getAddr();
-    // TODO: RMK35 Remove hardcoded number
-    Addr data_addr = tag_addr << 6;
-    // TODO: RMK35: I am not sure about this
-    int set = getOwner()->extractSet(data_addr);
-    for (int i = 0; i < getBlockSize(); i += 8) {
-        uint8_t tags8 = _data[i];
-        for (int j = 0; j < 8; ++j) {
-            if ((ways[8*i+j] != ENTRY_NOT_VALID) && ((tags8 & (1<<j)) != 0)) {
-                CacheBlk *blk = static_cast<CacheBlk*>(
-                    tags->findBlockBySetAndWay(set, ways[8*i+j]));
-                evict_blks.push_back(blk);
-            }
-        }
-    }
-}
+// TODO: RMK35: void
+// TODO: RMK35: ZeroBlk::maintainInclusitivity(const BaseTags *tags,
+// TODO: RMK35:                                std::vector<CacheBlk *> &evict_blks)
+// TODO: RMK35: {
+// TODO: RMK35:     Addr tag_addr = getAddr();
+// TODO: RMK35:     // TODO: RMK35 Remove hardcoded number
+// TODO: RMK35:     Addr data_addr = tag_addr << 6;
+// TODO: RMK35:     // TODO: RMK35: I am not sure about this
+// TODO: RMK35:     int set = getOwner()->extractSet(data_addr);
+// TODO: RMK35:     for (int i = 0; i < getBlockSize(); i += 8) {
+// TODO: RMK35:         uint8_t tags8 = _data[i];
+// TODO: RMK35:         for (int j = 0; j < 8; ++j) {
+// TODO: RMK35:             if ((ways[8*i+j] != ENTRY_NOT_VALID) && ((tags8 & (1<<j)) != 0)) {
+// TODO: RMK35:                 CacheBlk *blk = static_cast<CacheBlk*>(
+// TODO: RMK35:                     tags->findBlockBySetAndWay(set, ways[8*i+j]));
+// TODO: RMK35:                 evict_blks.push_back(blk);
+// TODO: RMK35:             }
+// TODO: RMK35:         }
+// TODO: RMK35:     }
+// TODO: RMK35: }
 
 TempZeroBlk::TempZeroBlk(unsigned size) : ZeroBlk()
 {

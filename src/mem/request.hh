@@ -133,6 +133,7 @@ class Request
          */
         CACHE_BLOCK_ZERO            = 0x00010000,
         REGION_ZERO                 = 0x00004000,
+        ZERO_TAG_ACCESS             = 0x0000000400000000,
 
         /** The request should not cause a memory access. */
         NO_ACCESS                   = 0x00080000,
@@ -201,7 +202,7 @@ class Request
          * These flags are *not* cleared when a Request object is
          * reused (assigned a new address).
          */
-        STICKY_FLAGS = INST_FETCH
+        STICKY_FLAGS = INST_FETCH | ZERO_TAG_ACCESS
     };
     static const FlagsType STORE_NO_DATA = CACHE_BLOCK_ZERO |
         CLEAN | INVALIDATE;
@@ -818,6 +819,7 @@ class Request
     bool isAtomicReturn() const { return _flags.isSet(ATOMIC_RETURN_OP); }
     bool isAtomicNoReturn() const { return _flags.isSet(ATOMIC_NO_RETURN_OP); }
     bool isRegionZero() const { return _flags.isSet(REGION_ZERO); }
+    bool isZeroTagAccess() const { return _flags.isSet(ZERO_TAG_ACCESS); }
 
     bool
     isAtomic() const

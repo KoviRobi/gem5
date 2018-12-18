@@ -41,6 +41,7 @@
 #define __MEM_CACHE_TAGS_ZERO_TAGS_HH__
 
 #include "base/statistics.hh"
+#include "mem/cache/replacement_policies/base.hh"
 #include "mem/cache/tags/base_set_assoc.hh"
 #include "mem/cache/zero_cache.hh"
 #include "mem/packet.hh"
@@ -66,6 +67,9 @@ class ZeroTags : public BaseSetAssoc
     unsigned zeroTagShift;
     ZeroCache *_zeroCache;
 
+    /** Replacement policy */
+    BaseReplacementPolicy *zeroReplacementPolicy;
+
   public:
     ZeroTags(const ZeroTagsParams *p);
     ~ZeroTags();
@@ -86,28 +90,38 @@ class ZeroTags : public BaseSetAssoc
     void invalidate(CacheBlk *blk) override;
     void insertBlock(const PacketPtr pkt, CacheBlk *blk) override;
 
+    /**
+     * Print all tags used
+     */
+    std::string print() override;
+    /** Debug print (DPRINTF), because of debugger escaping \n and \t
+    */
+    virtual void dprint();
+
     /** 'Inserts' a zero block (sets all the entries to false), and
      * sets is_secure, tag, etc.  After you do this, use
      * blk->setEntryValid/setEntryWay/setEntryZero
      * @param tagAddr indicates whether the address of pkt is a tag
      * addr, or a data addr (i.e. is between
      * getZeroCache()->zeroTagRegionStart/zeroTagRegionEnd) */
-    void insertZeroBlock(const PacketPtr pkt, ZeroBlk *blk);
-    ZeroBlk *accessZeroBlock(TagAddr tag_addr, bool is_secure, Cycles &lat);
-    ZeroBlk *findZeroBlock(TagAddr tag_addr, bool is_secure) const;
-    ZeroBlk *findZeroVictim(TagAddr tag_addr, const bool is_secure,
+    virtual void insertZeroBlock(const PacketPtr pkt, ZeroBlk *blk);
+    virtual ZeroBlk *accessZeroBlock(TagAddr tag_addr, bool is_secure, Cycles &lat);
+    virtual ZeroBlk *findZeroBlock(TagAddr tag_addr, bool is_secure) const;
+    virtual void invalidateZeroBlock(ZeroBlk *blk);
+    virtual ZeroBlk *findZeroVictim(TagAddr tag_addr, const bool is_secure,
                             std::vector<CacheBlk*>& evict_blks) const;
-    const std::vector<ZeroBlk*>
+    virtual const std::vector<ZeroBlk*>
     getPossibleZeroLocations(TagAddr tag_addr) const;
 
-    unsigned extractZeroSet(TagAddr addr) const;
-    Addr extractZeroTag(TagAddr addr) const;
-    TagAddr regenerateZeroBlkAddr(const ZeroBlk* blk) const;
+    virtual unsigned extractZeroSet(TagAddr addr) const;
+    virtual Addr extractZeroTag(TagAddr addr) const;
+    virtual TagAddr regenerateZeroBlkAddr(const ZeroBlk* blk) const;
 
     void forEachBlk(std::function<void(CacheBlk &)> visitor) override;
     bool anyBlk(std::function<bool(CacheBlk &)> visitor) override;
+    virtual void forEachZeroBlk(std::function<void(ZeroBlk &)> visitor);
 
-    unsigned getZeroBlockSize() const;
+    virtual unsigned getZeroBlockSize() const;
 
     void trySatisfyMigration(CacheBlk *blk) override;
 

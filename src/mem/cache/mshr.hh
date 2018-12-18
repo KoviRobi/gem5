@@ -357,14 +357,15 @@ class MSHR : public QueueEntry, public Printable
     { return targets.size() + deferredTargets.size(); }
 
     /**
-     * Extracts the subset of the targets that can be serviced given a
-     * received response. This function returns the targets list
-     * unless the response is a ReadRespWithInvalidate. The
-     * ReadRespWithInvalidate is only invalidating response that its
-     * invalidation was not expected when the request (a
-     * ReadSharedReq) was sent out. For ReadRespWithInvalidate we can
-     * safely service only the first FromCPU target and all FromSnoop
-     * targets (inform all snoopers that we no longer have the block).
+     * Extracts (and removes) the subset of the targets that can be
+     * serviced given a received response. This function returns the
+     * targets list unless the response is a
+     * ReadRespWithInvalidate. The ReadRespWithInvalidate is only
+     * invalidating response that its invalidation was not expected
+     * when the request (a ReadSharedReq) was sent out. For
+     * ReadRespWithInvalidate we can safely service only the first
+     * FromCPU target and all FromSnoop targets (inform all snoopers
+     * that we no longer have the block).
      *
      * @param pkt The response from the downstream memory
      */

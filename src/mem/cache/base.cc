@@ -275,7 +275,7 @@ BaseCache::handleTimingReqMiss(PacketPtr pkt, MSHR *mshr, CacheBlk *blk,
                 // port and also takes into account the additional
                 // delay of the xbar.
                 mshr->allocateTarget(pkt, forward_time, order++,
-                                     allocOnFill(pkt->cmd));
+                                     allocOnFill(pkt->cmd)||pkt->isZeroTagAccess());
                 if (mshr->getNumTargets() == numTarget) {
                     noTargetMSHR = mshr;
                     setBlocked(Blocked_NoTargets);
@@ -478,7 +478,7 @@ BaseCache::recvTimingResp(PacketPtr pkt)
         DPRINTF(Cache, "Block for addr %#llx being updated in Cache\n",
                 pkt->getAddr());
 
-        blk = handleFill(pkt, blk, writebacks, mshr->allocOnFill());
+        blk = handleFill(pkt, blk, writebacks, mshr->allocOnFill()||pkt->isZeroTagAccess());
         assert(blk != nullptr);
     }
 
@@ -507,7 +507,7 @@ BaseCache::recvTimingResp(PacketPtr pkt)
         // avoid later read getting stale data while write miss is
         // outstanding.. see comment in timingAccess()
         if (blk) {
-            blk->status &= ~BlkReadable;
+            //blk->status &= ~BlkReadable;
         }
         mshrQueue.markPending(mshr);
         schedMemSideSendEvent(clockEdge() + pkt->payloadDelay);
@@ -765,8 +765,9 @@ BaseCache::getNextQueueEntry()
         return wq_entry;
     } else if (miss_mshr) {
         // need to check for conflicting earlier writeback
+        PacketPtr tgt_pkt = miss_mshr->getTarget()->pkt;
         WriteQueueEntry *conflict_mshr =
-            writeBuffer.findPending(miss_mshr->blkAddr,
+            writeBuffer.findPending(tgt_pkt->getAddr(),
                                     miss_mshr->isSecure);
         if (conflict_mshr) {
             // not sure why we don't check order here... it was in the

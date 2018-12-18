@@ -742,6 +742,12 @@ class Packet : public Printable, public DataContainer
         cmd = MemCmd::ReadReq;
     }
 
+    bool
+    isZeroTagAccess() const
+    {
+        return req->isZeroTagAccess();
+    }
+
     /**
      * Constructor. Note that a Request object must be constructed
      * first, but the Requests's physical address and size fields need

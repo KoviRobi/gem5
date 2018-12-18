@@ -224,6 +224,11 @@ class CacheBlk : public ReplaceableEntry, public DataContainer
                  const Addr offset = 0) override;
 
     /**
+     * This clears the data of this object by setting it all to zero.
+     */
+    virtual void clearData();
+
+    /**
      * Sets the block's data from the packet.
      * @param pkt The packet containing the data.
      * @param blk_size The size of this cache-block.

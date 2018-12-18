@@ -229,6 +229,9 @@ MSHR::TargetList::print(std::ostream &os, int verbosity,
           case Target::FromCPU:
             s = "FromCPU";
             break;
+          case Target::FromZeroTag:
+            s = "FromZeroTag";
+            break;
           case Target::FromSnoop:
             s = "FromSnoop";
             break;
@@ -319,6 +322,10 @@ MSHR::allocateTarget(PacketPtr pkt, Tick whenReady, Counter _order,
     // outstanding miss
     assert(pkt->cmd != MemCmd::HardPFReq);
 
+    // No need to add another fetch from the zero-tags, as this MSHR
+    // exists because there is/was already one
+    if (pkt->cmd == MemCmd::ReadZeroTag) return;
+
     // if there's a request already in service for this MSHR, we will
     // have to defer the new target until after the response if any of
     // the following are true:
@@ -333,9 +340,11 @@ MSHR::allocateTarget(PacketPtr pkt, Tick whenReady, Counter _order,
     //   getting a writable block back or we have already snooped
     //   another read request that will downgrade our writable block
     //   to non-writable (Shared or Owned)
+    // - there is a zero-tag request
     PacketPtr tgt_pkt = targets.front().pkt;
     if (pkt->req->isCacheMaintenance() ||
         tgt_pkt->req->isCacheMaintenance() ||
+        tgt_pkt->isZeroTagAccess() ||
         !deferredTargets.empty() ||
         (inService &&
          (hasPostInvalidate() ||
@@ -351,7 +360,11 @@ MSHR::allocateTarget(PacketPtr pkt, Tick whenReady, Counter _order,
         // outstanding request: append to regular target list.  Only
         // mark pending if current request hasn't been issued yet
         // (isn't in service).
-        targets.add(pkt, whenReady, _order, Target::FromCPU, !inService,
+        // TODO: RMK35: Could we just avoid adding targets for the same address?
+        Target::Source source =
+            //(pkt->cmd == MemCmd::ReadZeroTag) ? Target::FromZeroTag :
+            Target::FromCPU;
+        targets.add(pkt, whenReady, _order, source, !inService,
                     alloc_on_fill);
     }
 }

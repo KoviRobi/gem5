@@ -99,6 +99,12 @@ CacheBlk::setData(const void *src, const Addr size,
 }
 
 void
+CacheBlk::clearData()
+{
+    std::memset(_data, 0, _blkSize);
+}
+
+void
 CacheBlk::setDataFromPacket(const Packet *pkt, const unsigned blk_size)
 {
     assert(pkt->getOffset(blk_size) + pkt->getSize() <= blk_size);

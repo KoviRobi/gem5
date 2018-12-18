@@ -47,7 +47,10 @@ from m5.objects import *
 # starting point, and specific parameters can be overridden in the
 # specific instantiations.
 
-class L1Cache(ZeroCache):
+class L1_ICache(Cache):
+    is_read_only = True
+    # Writeback clean lines as well
+    writeback_clean = True
     assoc = 2
     tag_latency = 2
     data_latency = 2
@@ -55,13 +58,13 @@ class L1Cache(ZeroCache):
     mshrs = 4
     tgts_per_mshr = 20
 
-class L1_ICache(L1Cache):
-    is_read_only = True
-    # Writeback clean lines as well
-    writeback_clean = True
-
-class L1_DCache(L1Cache):
-    pass
+class L1_DCache(ZeroCache):
+    assoc = 2
+    tag_latency = 2
+    data_latency = 2
+    response_latency = 2
+    mshrs = 4
+    tgts_per_mshr = 20
 
 class L2Cache(ZeroCache):
     assoc = 8

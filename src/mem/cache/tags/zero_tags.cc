@@ -54,7 +54,8 @@ ZeroTags::ZeroTags(const ZeroTagsParams *p) :
     zeroDataBlks(new uint8_t[p->size]),
     numZeroSets(p->size / (zeroBlkSize * p->assoc)),
     zeroSets(numZeroSets),
-    _zeroCache(nullptr)
+    _zeroCache(nullptr),
+    zeroReplacementPolicy(p->zero_replacement_policy)
 {
     /// Note, these are for *tag addresses*
     /// (i.e. getZeroCache()->isZeroTagRegion(addr)
@@ -83,7 +84,7 @@ ZeroTags::ZeroTags(const ZeroTagsParams *p) :
             zblk->setOwner(this);
 
             // Associate a replacement data entry to the block
-            zblk->replacementData = replacementPolicy->instantiateEntry();
+            zblk->replacementData = zeroReplacementPolicy->instantiateEntry();
 
             // Setting the tag to j is just to prevent long chains in the
             // hash table; won't matter because the block is invalid
@@ -163,9 +164,12 @@ ZeroTags::invalidate(CacheBlk *blk)
 {
     Addr addr = blk->getAddr();
     if (getZeroCache()->isZeroTagAddr(addr)) {
-        zeroTagsInUse--;
+        ZeroBlk *zblk = dynamic_cast<ZeroBlk*>(blk);
+        assert(zblk != nullptr);
+        invalidateZeroBlock(zblk);
+    } else {
+        BaseSetAssoc::invalidate(blk);
     }
-    BaseSetAssoc::invalidate(blk);
 }
 
 void
@@ -181,6 +185,33 @@ ZeroTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
     }
 }
 
+void
+ZeroTags::dprint()
+{
+    DPRINTF(ZeroCache, "%s\n", print());
+}
+
+std::string
+ZeroTags::print()
+{
+    std::string str = "tags:\n" + BaseSetAssoc::print() + "\nzero-tags:\n";
+    bool valid_zero_tags = false;
+
+    auto print_zblk = [&str, &valid_zero_tags](ZeroBlk &zblk) {
+        if (zblk.isValid()) {
+            valid_zero_tags = true;
+            str += csprintf("\tset: %d way: %d %s (0x%08x)\n", zblk.set, zblk.way,
+                            zblk.print(), zblk.getAddr());
+        }
+    };
+    forEachZeroBlk(print_zblk);
+
+    if (!valid_zero_tags)
+        str += "no valid zero-tags\n";
+
+    return str;
+}
+
 unsigned
 ZeroTags::getZeroBlockSize() const
 {
@@ -190,20 +221,24 @@ ZeroTags::getZeroBlockSize() const
 void
 ZeroTags::insertZeroBlock(const PacketPtr pkt, ZeroBlk *blk)
 {
-    Addr tag_addr = pkt->getAddr();
-    assert(getZeroCache()->isZeroTagAddr(tag_addr));
+    Addr addr = pkt->getAddr();
+    assert(getZeroCache()->isZeroTagAddr(addr));
+    TagAddr tag_addr = (TagAddr){pkt->getAddr()};
     assert(!blk->isValid());
 
     // Deal with what we are bringing in
     MasterID master_id = pkt->req->masterId();
     assert(master_id < _cache->system->maxMasters());
-    blk->insert(extractZeroTag((TagAddr){tag_addr}), pkt->isSecure(),
+    blk->insert(extractZeroTag(tag_addr), pkt->isSecure(),
                 master_id, pkt->req->taskId());
 
     // Statistics
     zeroTagOccupancies[master_id]++;
     zeroTagsInUse++;
     zeroTagAccesses++;
+
+    // Update replacement policy
+    zeroReplacementPolicy->reset(blk->replacementData);
 }
 
 ZeroBlk*
@@ -223,7 +258,7 @@ ZeroTags::accessZeroBlock(TagAddr tag_addr, bool is_secure, Cycles &lat)
                 accessLatency;
         }
 
-        replacementPolicy->touch(zblk->replacementData);
+        zeroReplacementPolicy->touch(zblk->replacementData);
     } else {
         lat = lookupLatency;
     }
@@ -239,6 +274,21 @@ ZeroTags::findZeroBlock(TagAddr tag_addr, bool is_secure) const
     return blk;
 }
 
+void
+ZeroTags::invalidateZeroBlock(ZeroBlk *zblk) {
+    zeroTagsInUse--;
+    assert(zblk);
+    assert(zblk->isValid());
+
+    occupancies[zblk->srcMasterId]--;
+    totalRefs += zblk->refCount;
+    sampledRefs++;
+
+    zblk->invalidate();
+
+    zeroReplacementPolicy->invalidate(zblk->replacementData);
+}
+
 ZeroBlk*
 ZeroTags::findZeroVictim(TagAddr tag_addr, const bool is_secure,
                          std::vector<CacheBlk*>& evict_blks) const
@@ -249,11 +299,11 @@ ZeroTags::findZeroVictim(TagAddr tag_addr, const bool is_secure,
     // Choose replacement victim from replacement candidates
     // TODO: Policy to select block with least valid non-zero data
     ZeroBlk* victim = static_cast<ZeroBlk*>(
-        replacementPolicy->getVictim(
+        zeroReplacementPolicy->getVictim(
             std::vector<ReplaceableEntry*>(
                 locations.begin(), locations.end())));
 
-    victim->maintainInclusitivity(this, evict_blks);
+    // TODO: RMK35: victim->maintainInclusitivity(this, evict_blks);
     evict_blks.push_back(victim);
 
     DPRINTF(CacheRepl, "set %x, way %x: selecting blk for replacement\n",
@@ -292,6 +342,14 @@ void
 ZeroTags::forEachBlk(std::function<void(CacheBlk &)> visitor)
 {
     BaseSetAssoc::forEachBlk(visitor);
+}
+
+void
+ZeroTags::forEachZeroBlk(std::function<void(ZeroBlk &)> visitor)
+{
+    for (ZeroBlk& zblk : zeroBlks) {
+        visitor(zblk);
+    }
 }
 
 bool
