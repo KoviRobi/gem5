@@ -1299,14 +1299,14 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
 
 # Start out with the compiler flags common to all compilers,
 # i.e. they all use -g for opt and -g -pg for prof
-ccflags = {'debug' : [], 'opt' : ['-g'], 'fast' : [], 'prof' : ['-g', '-pg'],
-           'perf' : ['-g']}
+ccflags = {'debug' : ['-g', '-O0'], 'opt' : ['-g'], 'fast' : [],
+           'prof' : ['-g', '-pg'], 'perf' : ['-g']}
 
 # Start out with the linker flags common to all linkers, i.e. -pg for
 # prof, and -lprofiler for perf. The -lprofile flag is surrounded by
 # no-as-needed and as-needed as the binutils linker is too clever and
 # simply doesn't link to the library otherwise.
-ldflags = {'debug' : [], 'opt' : [], 'fast' : [], 'prof' : ['-pg'],
+ldflags = {'debug' : ['-g', '-O0'], 'opt' : [], 'fast' : [], 'prof' : ['-pg'],
            'perf' : ['-Wl,--no-as-needed', '-lprofiler', '-Wl,--as-needed']}
 
 # For Link Time Optimization, the optimisation flags used to compile

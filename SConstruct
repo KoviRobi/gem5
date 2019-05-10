@@ -179,7 +179,10 @@ if GetOption('no_lto') and GetOption('force_lto'):
 #
 ########################################################################
 
-main = Environment()
+# For NixOS, based on
+# https://github.com/NixOS/nixpkgs/blob/master\
+# /pkgs/development/python-modules/cgkit/scons-env.patch
+main = Environment(ENV = os.environ)
 
 from gem5_scons import Transform
 from gem5_scons.util import get_termcap
