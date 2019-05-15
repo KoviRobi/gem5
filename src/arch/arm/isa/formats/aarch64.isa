@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2018 ARM Limited
+// Copyright (c) 2011-2019 ARM Limited
 // All rights reserved
 //
 // The license below extends only to copyright in the software and shall
@@ -37,6 +37,7 @@
 //          Thomas Grocutt
 //          Mbou Eyole
 //          Giacomo Gabrielli
+//          Robert Kovacsics
 
 output header {{
 namespace Aarch64
@@ -849,6 +850,7 @@ namespace Aarch64
                     return new Unknown64(machInst);
                 }
             } else if (bits(machInst, 21) == 1) {
+                // Have 29:27=111; 25=0; 21=1
                 uint8_t group = bits(machInst, 11, 10);
                 switch (group) {
                   case 0x0:
@@ -873,6 +875,15 @@ namespace Aarch64
                               default:
                                 M5_UNREACHABLE;
                             }
+                        // Have XX11 1X00 XX1X XXXX XXXX 00SS SSSO OOOO
+                        // Need 0011 1000 0010 0000 0000 00SS SSSO OOOO
+                        } else if (bits(machInst, 31, 12) == 0x38200 &&
+                                   bits(machInst, 11, 10) == 0) {
+                            IntRegIndex rstart =
+                                (IntRegIndex)(uint32_t)bits(machInst, 9, 5);
+                            IntRegIndex roffset =
+                                (IntRegIndex)(uint32_t)bits(machInst, 4, 0);
+                            return new STRZERO(machInst, rstart, roffset);
                         } else {
                             return new Unknown64(machInst);
                         }
