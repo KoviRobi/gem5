@@ -40,6 +40,10 @@ Source('mshr_queue.cc')
 Source('noncoherent_cache.cc')
 Source('write_queue.cc')
 Source('write_queue_entry.cc')
+Source('contiguous_bits.cc')
+
+GTest('contiguous_bits_test', 'contiguous_bits_test.cc', 'contiguous_bits.cc')
+GTest('zero_cache_test', 'zero_cache_test.cc', 'zero_cache.cc')
 
 DebugFlag('Cache')
 DebugFlag('CacheComp')
